@@ -182,3 +182,34 @@ A Warehouse / Area 1 immersion pass was committed before manual frame inspection
 This is the reason the **Mandatory visual QA** rule above is now a hard project requirement.
 
 No future visual pass should be presented to the user as accepted until the actual frames have been opened and reviewed.
+
+
+## Hybrid art-first presentation direction — 2026-10-07
+
+For Episode 1, especially Areas 2–10, **visual quality and source-specific storytelling take priority over forcing every element into true real-time 3D**.
+
+Preferred production model:
+- cinematic reveal art for first impressions;
+- 2.5D transparent creature/prop standees where generated art materially outperforms procedural models;
+- simple 3D geometry for spatial truth, collision, floors, pools, doors, pits and camera blocking;
+- original player-safe 2D maps for tactical fallback;
+- full 3D only where it genuinely improves the experience.
+
+MapForge should support optional private/session art through `assets/cinema/manifest.json` so copyrighted/source-derived or campaign-specific visuals do not need to be pushed to the public repository.
+
+### Source-material review requirement
+
+Before building or revising any Episode 1 area, review the user-supplied adventure source for **player-visible environmental details**, not just the encounter headline. These details should inform the visual.
+
+Examples already identified:
+- Area 2 Trials: intact rectangular chamber; buttresses and six columns; four pools that are blue, green, clear and cloudy; wall carvings showing the pools and robed figures submerging themselves; ornate double doors with a large lock.
+- Area 3 Traps: long widened east-running corridor, four subtle trap zones, ornate double doors, and the slab-filled mummy chamber beyond once revealed.
+- Area 4 Tunnels: crossing earthquake-damaged passages, cave-in debris, blood weeds, and the acid pit with floating bones.
+- Area 5 Death: dusty web-obscured ceiling, five high-hanging cocoons, humanoid-shaped cocoons, giant spider concealed in a dusty floor hollow.
+- Area 6 Goblin: stalactites/stalagmites, frightened Gorkoh bluffing with a gnarled piece of bleached wood, northeast bones-and-gear pile, fragile sharp stalactite cluster toward the carrion crawler cavern.
+- Area 7 Stomp: many bare severed feet, suspended granite Big Foot, rune-graven footprints on north and south walls.
+- Area 8 Tentacle: round sewer chamber, many pipes, massive cesspool with shallow outer section/deeper center, ten-foot-wide walkway, green tentacle.
+- Area 9 Dragon: wounded brass dragon wyrmling trapped beneath earthquake rubble, unable to breathe freely because of the boulders, two darkmantles deliberately staying out of reach; scene should read as rescue/possible ally, not boss fight.
+- Area 10 Shrine: granite rune-covered altar, broken Orrery housing, Sergeant Teeshe in the southwest corner, dead dwarf Caerhan, and the damaged entropy guardian above the altar.
+
+Do not silently replace source-visible details with generic fantasy decoration. If high-quality generated art can communicate the source better than low-detail procedural geometry, use the art.
