@@ -86,6 +86,14 @@ function water(g,x,z,r,color){
  ring(g,r-.28,.012,x,.051,z,M(0xe1f5f3,.19,{transparent:true,opacity:.37,emissive:color,emissiveIntensity:.44}));
  const light=new THREE.PointLight(color,10,7,2);light.position.set(x,1.15,z);g.add(light);return light;
 }
+function reliefFigure(g,x,y,z,flip=1){
+ const stone=M(0x6d6a60,.94);
+ // Shallow bas-relief: hooded robed figure bending toward a circular pool.
+ sphere(g,.16,x,y+.46,z,stone,1);
+ const robe=mesh(g,new THREE.ConeGeometry(.27,.72,7),stone,x,y,z);robe.rotation.z=flip*.13;
+ const arm=segment(g,[x+flip*.12,y+.20,z+.015],[x+flip*.34,y-.02,z+.02],.045,stone,6);
+ const basin=mesh(g,new THREE.TorusGeometry(.30,.045,6,18),stone,x+flip*.48,y-.18,z+.01);basin.rotation.x=Math.PI/2;
+}
 function makeTrials(g){
  const w=29,d=17.5;floor(g,w,d);masonry(g,w,d,3.35);
  const pulse=[];
@@ -103,12 +111,21 @@ function makeTrials(g){
    box(g,.13,1.7,.10,x+Math.sin(ang)*.62,1.35,z+Math.cos(ang)*.62,M(0x74736a));
   }
  }
+ // Source detail: the walls depict robed figures submerging themselves
+ // in the four pools. These are shallow reliefs, not readable GM text.
+ for(const side of [-1,1])for(let i=0;i<4;i++){
+  const z=-5.8+i*3.85;
+  reliefFigure(g,side*(w/2-.055),1.72,z,side);
+ }
  // Raised threshold and tall paired stone doors at the east end.
  box(g,.95,.22,4.0,w/2-.72,.11,0,M(0x57564f));
  for(const z of [-1.08,1.08]){
   box(g,.26,3.15,2.05,w/2-.28,1.58,z,M(0x8c8577));
   box(g,.29,.19,.31,w/2-.46,1.42,z+(z<0?.37:-.37),BRASS);
  }
+ // Large ornate central lock with concentric carved geometry.
+ const lock=sphere(g,.38,w/2-.52,1.48,0,BRASS,2);lock.scale.set(.34,1.0,1.0);
+ for(let j=0;j<3;j++){const r=ring(g,.28+j*.13,.035,w/2-.55,1.48,0,BRASS);r.rotation.y=Math.PI/2;r.rotation.z=j*.42;}
  // Side buttresses and ritual braziers add architectural scale cues.
  for(const side of [-1,1])for(const z of [-6.6,0,6.6]){
   box(g,.72,2.45,.95,side*(w/2-.48),1.22,z,M(0x4d4e48));
@@ -233,7 +250,17 @@ function makeGoblin(g){
  for(let j=0;j<3;j++)segment(g,[x-.90,1.45,z+.34],[x-.98-j*.05,1.58+j*.03,z+.43],.025,skin,6);
  // Tiny iron knife at the belt: comic menace, not boss-monster language.
  segment(g,[x-.25,.92,z+.31],[x-.32,.55,z+.48],.035,iron,6);
- const pulse=[torch(g,5.2,-3.8),torch(g,-7.0,4.5,0xff9b55)];
+ // Source detail: obvious heap of bones and gear to the northeast.
+ for(let i=0;i<14;i++){
+  const bx=5.3+(rand(i+701)-.5)*2.3,bz=-4.1+(rand(i+731)-.5)*1.9;
+  segment(g,[bx,.10,bz],[bx+.30,.10,bz+.10],.045,M(0xb7aa8c),6);
+ }
+ box(g,.58,.28,.42,5.9,.16,-4.4,leather);
+ // Fragile sharp stalactite cluster at the narrow approach to the next cavern.
+ for(let i=0;i<8;i++){
+  const h=.75+(i%4)*.22,x=7.0+(i%4)*.30,z=1.9+Math.floor(i/4)*.42;
+  const s=mesh(g,new THREE.ConeGeometry(.13,h,7),M(0x69675f),x,3.85-h/2,z);s.rotation.z=(i%2?.08:-.06);
+ } const pulse=[torch(g,5.2,-3.8),torch(g,-7.0,4.5,0xff9b55)];
  return {camera:new V(1.6,5.9,14.0),target:new V(x,1.22,z),pulse};
 }
 function makeStomp(g){
@@ -262,7 +289,17 @@ function makeStomp(g){
   const t=sphere(g,size,x,4.10,2.35-((toe-1.8)**2)*.11,toeStone,2);
   t.scale.set(.67,.42,1.05);
  }
- // Heavy suspension rig disappearing upward into darkness.
+ // Source detail: rune-graven footprints on north and south walls power
+ // the Big Foot. Keep them symbolic/player-visible without exposing mechanics.
+ for(const side of [-1,1]){
+  const wallZ=side*(d/2-.08);
+  const sole=mesh(g,new THREE.CircleGeometry(.58,16),M(0x8f8067,.8,{emissive:0x3d2f1d,emissiveIntensity:.28}),0,1.42,wallZ);
+  sole.scale.set(.72,1.28,1);sole.rotation.x=side*Math.PI/2;
+  for(let toe=0;toe<5;toe++){
+   const t=mesh(g,new THREE.CircleGeometry(.13-(toe*.009),12),sole.material,(toe-2)*.19,2.05-Math.abs(toe-2)*.05,wallZ-side*.01);
+   t.rotation.x=side*Math.PI/2;
+  }
+ } // Heavy suspension rig disappearing upward into darkness.
  for(const [x,z] of [[-1.3,-1.3],[-1.25,1.1],[1.55,-1.25],[1.55,1.15]]){
   segment(g,[x,4.75,z],[x*1.65,6.6,z*1.65],.11,DARK);
  }
@@ -352,7 +389,11 @@ function makeDragon(g){
  for(let i=0;i<7;i++){const p=tailPath.getPoint((i+.4)/8);const s=mesh(g,new THREE.ConeGeometry(.13,.38,5),horn,p.x,p.y+.29,p.z);s.rotation.z=.12;}
  // Wound on left shoulder, subdued but visible.
  const bruise=sphere(g,.34,cx-.92,1.58,cz+.62,wound,2);bruise.scale.set(1.45,.16,.72);
- // Two darkmantles remain secondary silhouettes overhead.
+ // Source detail: earthquake rubble pins and wounds the wyrmling, constraining
+ // her breathing and making the encounter read as rescue rather than boss fight.
+ for(const [x,y,z,s] of [[-1.05,1.72,-.25,.72],[-1.45,1.42,-.65,.58],[-.55,1.90,-1.0,.50]]){
+  const rock=mesh(g,new THREE.DodecahedronGeometry(s,0),M(0x55534d),cx+x,y,cz+z);rock.scale.set(1.35,.75,1.10);rock.rotation.set(.3,.5,.2);
+ } // Two darkmantles remain secondary silhouettes overhead.
  for(const x of [-4.4,4.8]){
   sphere(g,.45,x,4.15,-3.2,DARK,2);
   for(let i=0;i<4;i++)segment(g,[x,4.0,-3.2],[x+(i-1.5)*.52,2.95,-2.45],.06,DARK);
@@ -383,7 +424,17 @@ function makeShrine(g){const w=23,d=14;floor(g,w,d);masonry(g,w,d,3.9);
  for(let i=0;i<10;i++){const x=(rand(i+300)-.5)*9,z=(rand(i+340)-.5)*5;
   const o=sphere(g,.1,x,.16,z,ghost);o.scale.y=.44;
  }
- const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.3,8.0,15.6),target:new V(0,1.28,-1),pulse,arcs};}
+ // Source-visible story props: Caerhan's body, Sergeant Teeshe resting in
+ // the southwest corner, and the damaged entropy guardian above the altar.
+ const cloth=M(0x31475c),skin=M(0x8b6c56),dwarf=M(0x55402e),guardian=M(0x7b705d,.55,{metalness:.45});
+ // Teeshe: player-facing silhouette only; no possession cue.
+ sphere(g,.18,-7.7,1.58,4.8,skin,1);box(g,.52,1.05,.34,-7.7,.88,4.8,cloth);
+ // Caerhan: fallen dwarf near the altar.
+ const body=box(g,1.05,.28,.44,-1.8,.18,-.85,dwarf);body.rotation.y=.45;sphere(g,.19,-2.30,.25,-.58,skin,1);
+ // Gearwork maul/entropy guardian suspended over altar.
+ const hub=sphere(g,.42,0,3.42,-1.4,guardian,2);
+ for(let i=0;i<4;i++){const a=i*Math.PI/2;segment(g,[0,3.42,-1.4],[Math.cos(a)*2.15,3.15,-1.4+Math.sin(a)*2.15],.10,guardian,8);}
+ box(g,.72,.34,.34,2.38,3.10,-1.4,guardian); const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.3,8.0,15.6),target:new V(0,1.28,-1),pulse,arcs};}
 const BUILDERS={trials:makeTrials,traps:makeTraps,death:makeDeath,goblin:makeGoblin,stomp:makeStomp,tentacle:makeTentacle,dragon:makeDragon,shrine:makeShrine};
 export function createCinematicRoom(world,room){
  const root=new THREE.Group();root.name='Episode 1 / '+room;world.scene.add(root);
