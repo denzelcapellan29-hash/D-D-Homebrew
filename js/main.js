@@ -33,10 +33,15 @@ function prepareEpisodeScenes(){
  const syncEpisodeUI=()=>{
   const scene=episodeScenes[Number(select.value)];
   $('episodeNote').textContent=scene.note;
-  const hero=revealManifest?.[scene.id]?.hero||scene.hero;
+  const art=revealManifest?.[scene.id]||{};
+  const hero=art.hero||scene.hero;
+  const focus=art.focus;
   $('episodeReveal').disabled=!hero;
   $('episodeReveal').textContent=hero?'Cinematic Reveal':'Reveal not installed';
   $('episodeReveal').title=hero?'Show the high-quality player-facing establishing shot.':'Install this scene\'s private cinema art pack to enable its reveal.';
+  $('episodeFocus').disabled=!focus;
+  $('episodeFocus').textContent=focus?'Focus Detail':'No detail art';
+  $('episodeFocus').title=focus?'Show a source-specific player-facing close-up without leaving the scene.':'No focus-detail art is installed for this scene.';
  };
  for(const [i,scene] of episodeScenes.entries()){const option=document.createElement('option');option.value=String(i);option.textContent=scene.name;select.append(option);}
  select.value='0';syncEpisodeUI();
@@ -45,9 +50,16 @@ function prepareEpisodeScenes(){
  $('episodeReveal').addEventListener('click',()=>{
   const idx=Number(select.value),scene=episodeScenes[idx];
   const hero=revealManifest?.[scene.id]?.hero||scene.hero;
-  if(!hero){notify('No cinematic reveal art is installed for this scene yet. Showing the live scene instead.');showEpisodeScene(idx);return;}
+  if(!hero){notify('No cinematic reveal art is installed for this scene yet.');return;}
   presentationScene={type:'reveal',name:scene.name,src:hero};
   sendPresentation();$('episodeStatus').textContent='TV: cinematic reveal for '+scene.name;
+ });
+ $('episodeFocus').addEventListener('click',()=>{
+  const idx=Number(select.value),scene=episodeScenes[idx];
+  const focus=revealManifest?.[scene.id]?.focus;
+  if(!focus){notify('No focus-detail art is installed for this scene.');return;}
+  presentationScene={type:'focus',name:scene.name+' detail',src:focus};
+  sendPresentation();$('episodeStatus').textContent='TV: focus detail for '+scene.name;
  });
  $('episodeMap').addEventListener('click',()=>{const idx=Number(select.value),scene=episodeScenes[idx];if(!scene.src){notify('No original map is available for this scene.');return;}presentationScene={type:'image',name:scene.name,src:scene.src};sendPresentation();$('episodeStatus').textContent='TV: original battlemap for '+scene.name;});
  $('episodePrev').addEventListener('click',()=>showEpisodeScene(Number(select.value)-1));
@@ -60,6 +72,7 @@ function prepareEpisodeScenes(){
   if(e.key==='ArrowLeft'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value)-1);}
   if(e.code==='Space'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value));}
   if(e.key.toLowerCase()==='r'&&!$('episodeReveal').disabled)$('episodeReveal').click();
+  if(e.key.toLowerCase()==='f'&&!$('episodeFocus').disabled)$('episodeFocus').click();
   if(e.key.toLowerCase()==='b')$('episodeBlackout').click();
   if(e.key.toLowerCase()==='l')$('episodeLive').click();
  });
