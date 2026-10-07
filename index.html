@@ -20,7 +20,7 @@
     <header class="topbar">
       <a href="#" class="brand" aria-label="MapForge 3D home"><span class="brand-mark">◆</span><span>MAPFORGE<span class="brand-light">/3D</span></span></a>
       <div class="topbar-middle"><span class="live-indicator"></span><span id="mapTitle">AREA 01 · THE RAT FISSURE</span></div>
-      <div class="topbar-actions"><span class="version">CINEMA v0.7</span><button id="openTV" class="button" type="button">▣ Open TV View</button><button id="loadDemo" class="button quiet" type="button">Reset demo</button></div>
+      <div class="topbar-actions"><span class="version">CINEMA v0.8 HYBRID</span><button id="openTV" class="button" type="button">▣ Open TV View</button><button id="loadDemo" class="button quiet" type="button">Reset demo</button></div>
     </header>
 
     <div class="workbench">
@@ -33,10 +33,11 @@
 
         <section class="panel episode-panel" id="episodePanel">
           <div class="kicker">EPISODE 1 / SHOW CONTROL</div><h2>Cinematic scene director</h2>
-          <p class="microcopy">Send a scene to the TV with one click. This is presentation mode: Areas 2, 3 and 5 now have cinematic 3D rooms. You can instantly switch to each original 2D map for tactical clarity.</p>
+          <p class="microcopy">Send a scene to the TV with one click. This is presentation mode: Episode scenes can use cinematic reveal art, live 3D dioramas, or the original 2D map. Use the highest-quality presentation for the moment, then switch back to the playable view.</p>
           <label for="episodeScene">Scene to show</label><select id="episodeScene" aria-label="Episode scene"></select>
           <div class="resource-actions"><button id="episodePrev" class="button slim" type="button">← Previous</button><button id="episodeShow" class="button primary slim" type="button">Show on TV</button><button id="episodeNext" class="button slim" type="button">Next →</button></div>
-          <div class="resource-actions"><button id="episodeMap" class="button slim" type="button">Show original 2D map</button><button id="episodeBlackout" class="button slim" type="button">Blackout TV</button><button id="episodeLive" class="button slim" type="button">Return to live 3D</button></div>
+          <div class="resource-actions"><button id="episodeReveal" class="button primary slim" type="button">Cinematic Reveal</button><button id="episodeMap" class="button slim" type="button">Show original 2D map</button></div>
+          <div class="resource-actions"><button id="episodeBlackout" class="button slim" type="button">Blackout TV</button><button id="episodeLive" class="button slim" type="button">Return to live 3D</button></div>
           <p id="episodeStatus" class="microcopy" aria-live="polite">Select a scene, then press Show on TV.</p>
           <details open><summary>DM-only scene reminder</summary><p id="episodeNote" class="microcopy"></p></details>
           <p class="microcopy">Shortcuts when not typing: → / ← change scene; Space sends selected scene; B blacks out; L returns to 3D.</p>
