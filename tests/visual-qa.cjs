@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
 const out=path.join(root,'qa-artifacts');
 fs.mkdirSync(out,{recursive:true});
 const port=8734;
-let server, browser;
+let server, browser, directorPage;
 const errors=[];
 const nap=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitForServer(){for(let i=0;i<80;i++){try{const r=await fetch(`http://127.0.0.1:${port}/`);if(r.ok)return;}catch{}await nap(250);}throw Error('Local HTTP server did not start');}
@@ -19,7 +19,7 @@ async function run(){
  await waitForServer();
  browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--no-sandbox']});
  const context=await browser.newContext({viewport:{width:1600,height:900},deviceScaleFactor:1});
- const dm=await context.newPage();observe(dm,'director');
+ const dm=await context.newPage();directorPage=dm;observe(dm,'director');
  await dm.goto(`http://127.0.0.1:${port}/index.html`,{waitUntil:'domcontentloaded'});
  await dm.locator('#loadingOverlay').waitFor({state:'hidden',timeout:45000});
  assert.ok(await dm.locator('#viewport canvas').count(),'WebGL canvas missing');
@@ -31,10 +31,10 @@ async function run(){
  await dm.locator('#orbitMode').click();await nap(500);
  const tv=await context.newPage();observe(tv,'tv');
  await tv.goto(`http://127.0.0.1:${port}/tv.html`,{waitUntil:'domcontentloaded'});
- await nap(4500);await shot(tv,'03-tv-live');
- const indices=[['trials','04-trials-3d'],['traps','05-traps-3d'],['death','06-death-3d']];
+ await tv.locator('#status').waitFor({state:'hidden',timeout:90000});await nap(1000);await shot(tv,'03-tv-live');
+ const indices=[['trials','04-trials-3d'],['traps','05-traps-3d'],['death','06-death-3d'],['goblin','09-goblin-3d'],['stomp','10-stomp-3d'],['tentacle','11-tentacle-3d'],['dragon','12-dragon-3d'],['shrine','13-shrine-3d']];
  for(const [id,name] of indices){
-  await dm.locator('#episodeScene').selectOption({label:{trials:'Area 2 · Trials',traps:'Area 3 · Traps',death:'Area 5 · Death'}[id]});
+  await dm.locator('#episodeScene').selectOption({label:{trials:'Area 2 · Trials',traps:'Area 3 · Traps',death:'Area 5 · Death',goblin:'Area 6 · Goblin',stomp:'Area 7 · Stomp',tentacle:'Area 8 · Tentacle',dragon:'Area 9 · Dragon',shrine:'Area 10 · Shrine of Destruction'}[id]});
   await dm.locator('#episodeShow').click();await nap(2700);
   assert.equal(await tv.locator('#cinemaPresentation').evaluate(el=>getComputedStyle(el).display),'none',`${id} did not request 3D`);
   assert.ok(await tv.locator('#screen canvas').count(),`${id} canvas missing`);
@@ -48,4 +48,4 @@ async function run(){
  if(errors.length)throw Error(errors.join('\n').slice(0,4000));
  console.log('PASS: WebGL + orbit + first-person + TV + 3D scenes + map + blackout');
 }
-run().catch(e=>{console.error(e);fs.writeFileSync(path.join(out,'failure.txt'),String(e.stack||e)+'\n'+errors.join('\n'));process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)server.kill();});
+run().catch(e=>{console.error(e);fs.writeFileSync(path.join(out,'failure.txt'),String(e.stack||e)+'\n'+errors.join('\n'));process.exitCode=1;}).finally(async()=>{if(directorPage&&process.exitCode){await directorPage.screenshot({path:path.join(out,'failure-director.png')}).catch(()=>{});}if(browser)await browser.close();if(server)server.kill();});
