@@ -1,0 +1,7 @@
+locator.waitFor: Timeout 45000ms exceeded.
+Call log:
+  - waiting for locator('#loadingOverlay') to be hidden
+    95 × locator resolved to visible <div role="status" aria-live="polite" id="loadingOverlay" class="loading-overlay">…</div>
+
+    at run (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:25:38)
+director PAGEERROR: Identifier 'mouthMat' has already been declared
