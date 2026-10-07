@@ -25,6 +25,12 @@ function prepareEpisodeScenes(){
  select.value='0';$('episodeNote').textContent=episodeScenes[0].note;
  select.addEventListener('change',()=>{$('episodeNote').textContent=episodeScenes[Number(select.value)].note;});
  $('episodeShow').addEventListener('click',()=>showEpisodeScene(Number(select.value)));
+ $('episodeReveal').addEventListener('click',()=>{
+  const idx=Number(select.value),scene=episodeScenes[idx];
+  if(!scene.hero){notify('No cinematic reveal art is installed for this scene yet. Showing the live scene instead.');showEpisodeScene(idx);return;}
+  presentationScene={type:'image',name:scene.name,src:scene.hero};
+  sendPresentation();$('episodeStatus').textContent='TV: cinematic reveal for '+scene.name;
+ });
  $('episodeMap').addEventListener('click',()=>{const idx=Number(select.value),scene=episodeScenes[idx];if(!scene.src){notify('No original map is available for this scene.');return;}presentationScene={type:'image',name:scene.name,src:scene.src};sendPresentation();$('episodeStatus').textContent='TV: original battlemap for '+scene.name;});
  $('episodePrev').addEventListener('click',()=>showEpisodeScene(Number(select.value)-1));
  $('episodeNext').addEventListener('click',()=>showEpisodeScene(Number(select.value)+1));
