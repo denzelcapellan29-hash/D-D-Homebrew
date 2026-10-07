@@ -78,6 +78,7 @@ export function buildConnection(world,c) {
   const floorWood=repeatedSurface(wood,0x806044,5,5);
   const cobbles=canvasMaterial('cobbles');
   const roofTiles=canvasMaterial('tiles');
+  const roofRand=n=>{const v=Math.sin(n*197.91+41.75)*48153.39;return v-Math.floor(v);};
   // Catastrophic artifact rupture: deliberately asymmetrical and torn rather than
   // a circular engineered shaft. The playable rope opening remains compact, but
   // the visible break has lobes and branch fractures that shear the floor outward.
