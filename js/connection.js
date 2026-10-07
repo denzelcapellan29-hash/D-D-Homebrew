@@ -246,12 +246,16 @@ export function buildConnection(world,c) {
   const sw=12,sd=10.5;
   streetShape.moveTo(-sw,-sd);streetShape.lineTo(sw,-sd);streetShape.lineTo(sw,sd);streetShape.lineTo(-sw,sd);streetShape.closePath();
   const warehouseVoid=new THREE.Path();
-  const wx=c.halfW+.42,wz=c.halfH+.42;
-  warehouseVoid.moveTo(-wx,-wz);warehouseVoid.lineTo(-wx,wz);warehouseVoid.lineTo(wx,wz);warehouseVoid.lineTo(wx,-wz);warehouseVoid.closePath();
+  const wx=c.halfW+.42,wz=c.halfH+.42,streetOffsetZ=3.9;
+  // Shape holes use the street mesh's local coordinates; the warehouse is
+  // streetOffsetZ units behind that local origin.
+  const localWarehouseZ=-streetOffsetZ;
+  warehouseVoid.moveTo(-wx,localWarehouseZ-wz);warehouseVoid.lineTo(-wx,localWarehouseZ+wz);
+  warehouseVoid.lineTo(wx,localWarehouseZ+wz);warehouseVoid.lineTo(wx,localWarehouseZ-wz);warehouseVoid.closePath();
   streetShape.holes.push(warehouseVoid);
   const street=new THREE.Mesh(new THREE.ShapeGeometry(streetShape),cobbles);
   street.name='Waterdeep cobbled street around warehouse';street.rotation.x=-Math.PI/2;
-  street.position.set(c.x,c.depth-.205,c.z+3.9);street.receiveShadow=true;upper.add(street);
+  street.position.set(c.x,c.depth-.205,c.z+streetOffsetZ);street.receiveShadow=true;upper.add(street);
   const plaster=new THREE.MeshStandardMaterial({color:0x4d4b47,roughness:1});
   const roofDark=new THREE.MeshStandardMaterial({color:0x342c29,roughness:1});
   for(let k=0;k<5;k++){
