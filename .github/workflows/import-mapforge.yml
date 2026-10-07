@@ -26,6 +26,9 @@ jobs:
           unzip -q /tmp/mapforge-source.zip -d /tmp/mapforge-unpacked
           test -f /tmp/mapforge-unpacked/mapforge-3d/index.html
           cp -a /tmp/mapforge-unpacked/mapforge-3d/. ./
+          # Workflow updates are separately managed by GitHub connector.
+          # The Actions token is deliberately not given permission to modify workflows.
+          git restore --source=HEAD -- .github/workflows/visual-qa.yml .github/workflows/import-mapforge.yml
       - name: Commit full application and remove transfer chunks
         shell: bash
         run: |
