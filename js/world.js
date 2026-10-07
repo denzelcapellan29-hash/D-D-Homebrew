@@ -535,7 +535,12 @@ export class TabletopWorld {
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
     }else if(this.connection&&level==='warehouse'){
-      const c=this.connection;this.orbit.target.set(c.x,c.depth+.06,c.z+.22);this.camera.position.set(c.x+6.7,c.depth+3.7,c.z+8.1);this.camera.fov=51;this.camera.updateProjectionMatrix();this.orbit.update();
+      const c=this.connection;
+      // Low three-quarter "inside the ruin" composition: the rupture dominates
+      // while exterior set edges stay out of frame.
+      this.orbit.target.set(c.x,c.depth+.10,c.z+.10);
+      this.camera.position.set(c.x+5.15,c.depth+2.75,c.z+6.35);
+      this.camera.fov=52;this.camera.updateProjectionMatrix();this.orbit.update();
     }else this.recenter();
   }
   upperSpawn(){const c=this.connection;return {x:c.x+.62,z:c.z+3.02};}
