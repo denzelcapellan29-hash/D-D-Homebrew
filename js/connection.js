@@ -23,7 +23,7 @@ function pointInRupture(c,x,z,pad=.10){
 // One world unit = one 5-foot square. Depth is a user-adjustable assumption.
 export function connectionLayout(world, feet=60) {
   const p=world.mapToWorld(.273,.405);
-  return {x:p.x,z:p.z,r:1.05,depth:feet/5,halfW:4.5,halfH:3.6,
+  return {x:p.x,z:p.z,r:1.34,depth:feet/5,halfW:4.5,halfH:3.6,
     landing:world.mapToWorld(.363,.405)};
 }
 export function inShaft(c,x,z,margin=0) {
@@ -162,7 +162,7 @@ export function buildConnection(world,c) {
   shaftGeo.computeVertexNormals();
   const shaftWall=new THREE.Mesh(shaftGeo,new THREE.MeshStandardMaterial({color:0x6b665d,vertexColors:true,roughness:1,side:THREE.DoubleSide,flatShading:true}));
   shaftWall.name='Artifact-torn chasm walls';shaftWall.castShadow=true;shaftWall.receiveShadow=true;shaft.add(shaftWall);
-  const abyssGlow=new THREE.PointLight(0x425c6c,5.5,10,2);
+  const abyssGlow=new THREE.PointLight(0x415866,3.6,9,2);
   abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
   const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
   landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
@@ -196,25 +196,21 @@ export function buildConnection(world,c) {
   }
   box(upper,'Warehouse back wall',c.x,c.depth+1.0,c.z-c.halfH,c.halfW*2,2,.26,wallStone);
   box(upper,'Exposed roof crossbeam',c.x,c.depth+3.65,c.z-2.8,8.1,.22,.25,darkWood);
-  // Coherent broken gable roof: broad tile planes with missing chunks read
-  // as architecture from the hero camera, while exposed rafters show collapse.
+  // Readable half-collapsed gable: two broad surviving rear planes plus a
+  // single broken front remnant. Fewer, larger masses read as a damaged roof
+  // instead of floating strips.
   const pitch=.42;
   for(const side of [-1,1]){
-    for(const z of [-2.95,-1.7,-.55]){
-      const beam=box(upper,'Exposed sloping timber rafter',c.x+side*2.0,c.depth+3.27,c.z+z,4.4,.16,.17,darkWood);
+    for(const z of [-2.7,-1.15]){
+      const beam=box(upper,'Exposed sloping timber rafter',c.x+side*2.0,c.depth+3.24,c.z+z,4.35,.16,.18,darkWood);
       beam.rotation.z=-side*pitch;
     }
-    const panels=[
-      {x:1.80,z:-2.95,w:3.25,d:1.15,y:3.42},
-      {x:2.42,z:-1.58,w:2.05,d:1.28,y:3.18},
-      {x:1.38,z:-.42,w:2.30,d:.82,y:3.58}
-    ];
-    for(const [j,p] of panels.entries()){
-      const section=box(upper,'Broken red tile roof panel',c.x+side*p.x,c.depth+p.y,c.z+p.z,p.w,.075,p.d,roofTiles.clone());
-      section.rotation.z=-side*pitch;section.rotation.y=(j-1)*.025*side;
-    }
+    const rear=box(upper,'Surviving rear gable roof',c.x+side*1.95,c.depth+3.34,c.z-2.15,4.0,.09,2.45,roofTiles.clone());
+    rear.rotation.z=-side*pitch;
+    const broken=box(upper,'Broken front roof remnant',c.x+side*2.65,c.depth+3.02,c.z+.05,1.7,.085,.88,roofTiles.clone());
+    broken.rotation.z=-side*pitch;broken.rotation.y=side*.035;
   }
-  box(upper,'Weathered ridge beam',c.x,c.depth+4.03,c.z-2.12,.27,.30,3.9,darkWood);
+  box(upper,'Weathered ridge beam',c.x,c.depth+4.02,c.z-2.05,.28,.30,4.0,darkWood);
   // A few masonry chunks sit where walls failed; keep the center readable.
   for(let i=0;i<5;i++){
     const angle=i*1.31+.42,rad=1.75+(i%2)*.32;
@@ -236,24 +232,27 @@ export function buildConnection(world,c) {
     box(upper,'Warehouse crate',x,c.depth+.32,z,.6,.64,.6,wood);
     box(upper,'Crate iron strap',x,c.depth+.65,z,.63,.04,.04,iron);
   }
-  for(let i=0;i<7;i++){
-    const plank=box(upper,'Fallen timber',c.x+1.65+(i%3)*.55,c.depth+.07,c.z+.7+Math.floor(i/3)*.55,.16,.1,1.1,darkWood);
-    plank.rotation.y=i*.81;
+  for(let i=0;i<4;i++){
+    const plank=box(upper,'Fallen timber',c.x+2.05+(i%2)*.58,c.depth+.07,c.z+.92+Math.floor(i/2)*.62,.15,.09,.9,darkWood);
+    plank.rotation.y=.45+i*.87;
   }
-  // Waterdeep context: a believable cobbled apron and distant gabled
-  // silhouettes. Nothing near the hero camera is allowed to read as a giant box.
-  box(upper,'Waterdeep cobbled street',c.x,c.depth-.21,c.z+4.1,20,.30,16,cobbles);
-  const plaster=new THREE.MeshStandardMaterial({color:0x70675d,roughness:1});
-  const timber=new THREE.MeshStandardMaterial({color:0x3b2b22,roughness:1});
-  function distantHouse(x,z,w,h,flip=1){
-    const g=new THREE.Group();g.position.set(x,c.depth,z);upper.add(g);
-    box(g,'Distant plaster facade',0,h*.5,0,w,h,.72,plaster);
-    for(const sx of [-.34,.34])box(g,'Distant timber upright',sx*w, h*.52,.38,.09,h*.92,.08,timber);
-    box(g,'Distant timber crossbar',0,h*.68,.38,w*.88,.08,.08,timber);
-    const left=box(g,'Distant tiled roof',-w*.24,h+.34,0,w*.58,.08,1.25,roofTiles.clone());left.rotation.z=-.42*flip;
-    const right=box(g,'Distant tiled roof',w*.24,h+.34,0,w*.58,.08,1.25,roofTiles.clone());right.rotation.z=.42*flip;
+  // Waterdeep context: continuous cobbles and distant roofline masses. Keep
+  // the context below the warehouse silhouette so it supports the shot instead
+  // of competing with it.
+  box(upper,'Waterdeep cobbled street',c.x,c.depth-.21,c.z+4.4,24,.30,21,cobbles);
+  const plaster=new THREE.MeshStandardMaterial({color:0x4d4b47,roughness:1});
+  const roofDark=new THREE.MeshStandardMaterial({color:0x342c29,roughness:1});
+  for(let k=0;k<5;k++){
+    const x=c.x-7.6+k*3.8,z=c.z-11.7-(k%2)*.35,h=1.8+(k%3)*.35;
+    box(upper,'Distant Waterdeep mass',x,c.depth+h*.5,z,3.2,h,1.0,plaster);
+    const roof=box(upper,'Distant Waterdeep roofline',x,c.depth+h+.22,z,3.6,.16,1.35,roofDark);
+    roof.rotation.z=(k%2?.10:-.10);
   }
-  for(let k=0;k<6;k++)distantHouse(c.x-8.2+k*3.25,c.z-10.1-(k%2)*.5,2.45,2.7+(k%3)*.42,k%2?1:-1);
+  // Low side fragments close the street edges without becoming foreground boxes.
+  for(const side of [-1,1]){
+    box(upper,'Ruined neighboring wall',c.x+side*7.0,c.depth+.34,c.z+4.0,1.25,.72,8.0,wallStone);
+  }
+
   // Restrained magical light and dusty haze from the rupture.
   const glow=new THREE.PointLight(0x4e7188,4.5,7,2);glow.position.set(c.x,c.depth-.55,c.z);upper.add(glow);
   for(let i=0;i<8;i++){
