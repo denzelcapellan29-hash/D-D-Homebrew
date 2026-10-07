@@ -27,12 +27,24 @@ async function loadRevealManifest(){
  }catch{}
 }
 function sendPresentation(){if(cinemaOpen)cinema.postMessage({type:'presentation',scene:presentationScene});}
-function showEpisodeScene(idx){
+function showNativeEpisodeScene(idx){
  selectedEpisodeScene=Math.max(0,Math.min(episodeScenes.length-1,idx));
  const scene=episodeScenes[selectedEpisodeScene];$('episodeScene').value=String(selectedEpisodeScene);
  $('episodeNote').textContent=scene.note;
  presentationScene={type:scene.type,name:scene.name,src:scene.src,room:scene.id,caption:scene.caption};
- sendPresentation();$('episodeStatus').textContent=scene.type==='live'?'TV is showing live 3D.':`TV: ${scene.name}${scene.type==='room3d'?' (cinematic 3D)':''}`;
+ sendPresentation();$('episodeStatus').textContent=scene.type==='live'?'TV is showing live 3D.':`TV: ${scene.name}${scene.type==='room3d'?' (3D play view)':''}`;
+}
+function showEpisodeScene(idx){
+ selectedEpisodeScene=Math.max(0,Math.min(episodeScenes.length-1,idx));
+ const scene=episodeScenes[selectedEpisodeScene];$('episodeScene').value=String(selectedEpisodeScene);
+ $('episodeNote').textContent=scene.note;
+ const hero=revealManifest?.[scene.id]?.hero||scene.hero;
+ if(hero){
+  presentationScene={type:'reveal',name:scene.name,src:hero};
+  sendPresentation();$('episodeStatus').textContent='TV: cinematic reveal for '+scene.name;
+  return;
+ }
+ showNativeEpisodeScene(selectedEpisodeScene);
 }
 function prepareEpisodeScenes(){
  const select=$('episodeScene');
@@ -48,6 +60,8 @@ function prepareEpisodeScenes(){
   $('episodeFocus').disabled=!focus;
   $('episodeFocus').textContent=focus?'Focus Detail':'No detail art';
   $('episodeFocus').title=focus?'Show a source-specific player-facing close-up without leaving the scene.':'No focus-detail art is installed for this scene.';
+  $('episodeShow').textContent=hero?'Show Best View':'Show on TV';
+  $('episodeLive').textContent=scene.type==='room3d'?'Enter 3D Play View':'Return to live map';
  };
  for(const [i,scene] of episodeScenes.entries()){const option=document.createElement('option');option.value=String(i);option.textContent=scene.name;select.append(option);}
  select.value='0';syncEpisodeUI();
@@ -71,7 +85,11 @@ function prepareEpisodeScenes(){
  $('episodePrev').addEventListener('click',()=>showEpisodeScene(Number(select.value)-1));
  $('episodeNext').addEventListener('click',()=>showEpisodeScene(Number(select.value)+1));
  $('episodeBlackout').addEventListener('click',()=>{presentationScene={type:'blackout'};sendPresentation();$('episodeStatus').textContent='TV blacked out.';});
- $('episodeLive').addEventListener('click',()=>{presentationScene={type:'live'};sendPresentation();$('episodeStatus').textContent='TV is showing live 3D.';});
+ $('episodeLive').addEventListener('click',()=>{
+  const idx=Number(select.value),scene=episodeScenes[idx];
+  if(scene.type==='room3d')showNativeEpisodeScene(idx);
+  else{presentationScene={type:'live'};sendPresentation();$('episodeStatus').textContent='TV is showing the live map.';}
+ });
  document.addEventListener('keydown',e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
   if(e.key==='ArrowRight'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value)+1);}
