@@ -53,14 +53,6 @@ jobs:
                   print('Explore occlusion fraction:',round(white,3))
                   assert white < .28, f'First-person view obstructed by a bright wall: {white:.0%}'
           PY
-      - name: Upload QA screenshots and logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mapforge-visual-qa
-          path: qa-artifacts/
-          if-no-files-found: warn
-
       - name: Prepare small visual QA previews
         if: always()
         shell: bash
@@ -76,13 +68,12 @@ jobs:
           PYCODE
           test ! -f qa-artifacts/results.json || cp qa-artifacts/results.json qa-preview/results.json
           test ! -f qa-artifacts/failure.txt || cp qa-artifacts/failure.txt qa-preview/failure.txt
-      - name: Publish visual QA previews to GitHub
+      - name: Upload QA screenshots, previews and logs
         if: always()
-        shell: bash
-        run: |
-          if [ -z "$(find qa-preview -maxdepth 1 -type f -print -quit)" ]; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f qa-preview/
-          git commit -m "Save visual QA previews for $GITHUB_SHA [skip ci]" || exit 0
-          git push origin HEAD:main
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapforge-visual-qa
+          path: |
+            qa-artifacts/
+            qa-preview/
+          if-no-files-found: warn
