@@ -191,11 +191,20 @@ export function buildConnection(world,c) {
   shaftWall.name='Artifact-torn chasm walls';shaftWall.castShadow=true;shaftWall.receiveShadow=true;shaft.add(shaftWall);
   const abyssGlow=new THREE.PointLight(0x415866,3.6,9,2);
   abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
-  const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
-  landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
-  landing.name='Rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
-  box(root,'West-wall entrance floor', (c.x+c.landing.x)/2,.015,c.z,c.landing.x-c.x+.8,.035,1.10,stone);
-  for(const side of [-1,1])box(root,'Fissure entrance jamb',(c.x+c.landing.x)/2,world.rockHeight/2,c.z+side*.67,c.landing.x-c.x+.4,world.rockHeight,.22,stone);
+  const landingGeo=new THREE.CircleGeometry(c.r*1.03,15);
+  const landing=new THREE.Mesh(landingGeo,stone);
+  landing.rotation.x=-Math.PI/2;landing.rotation.z=.17;landing.scale.set(1.0,.78,1);
+  landing.position.set(c.x,.012,c.z);landing.name='Rough rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
+  const entranceFloor=box(root,'Natural west-wall fissure floor',(c.x+c.landing.x)/2,.012,c.z,c.landing.x-c.x+.72,.03,1.02,stone);
+  entranceFloor.rotation.y=.02;
+  // Natural rock shoulders replace the old rectangular doorway jambs.
+  const jambGeo=new THREE.IcosahedronGeometry(.46,2);
+  for(const side of [-1,1])for(let i=0;i<3;i++){
+    const rock=new THREE.Mesh(jambGeo,stone);
+    rock.position.set((c.x+c.landing.x)/2+(i-.8)*.34,.48+i*.34,c.z+side*(.62+.08*i));
+    rock.scale.set(.95+.12*i,.82+.18*i,.70+.08*i);rock.rotation.set(.13*i,.72*i,.08*side*i);
+    rock.castShadow=true;rock.receiveShadow=true;rock.name='Natural fissure entrance rock';root.add(rock);
+  }
   // Rope remains visible in both level views and reaches the cave floor.
   const anchor={x:c.x-.52,z:c.z-.32};
   const beam=box(upper,'Rope anchor beam',c.x-.62,c.depth+.17,c.z-1.05,2.3,.24,.25,darkWood);
