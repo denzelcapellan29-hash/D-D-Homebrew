@@ -147,12 +147,20 @@ export class TabletopWorld {
     this.rockHeight=rockFeet/5;
     this.connectionOptions={enabled:!!connectionOptions.enabled,depthFeet:clamp(Number(connectionOptions.depthFeet)||60,20,150)};
     this.connection=this.connectionOptions.enabled?connectionLayout(this,this.connectionOptions.depthFeet):null;
+    if(this.connection){
+      this.scene.background.set('#171d1c');
+      this.scene.fog.color.set('#171d1c');
+      this.scene.fog.near=24;this.scene.fog.far=72;
+    }else{
+      this.scene.fog.near=38;this.scene.fog.far=100;
+    }
     const oldSelection=this.selectedTokenId;const oldLevel=this.activeLevel;
     this.connectionMeshes=null;this.climbing=null;this.tokenTransit=null;this.activeLevel=this.connection&&oldLevel==='warehouse'?'warehouse':'area1';
     release(this.gridRoot);release(this.worldRoot);
     this.tokenRoot=new THREE.Group();this.tokenRoot.name='Miniatures';
     this.worldRoot.add(this.tokenRoot);this.tokens=[];this.nextTokenId=1;
     this._buildGround();this._buildRock();this._buildRubble();this._buildProps();
+    if(this.connection)this._buildCaveShell();
     if(this.connection)this.connectionMeshes=buildConnection(this,this.connection);
     this._buildGrid();
     for(const tok of savedTokens)this.addToken(tok.kind,tok.x,tok.z,tok.label,true,tok.level||'area1',tok.id);
@@ -284,6 +292,65 @@ export class TabletopWorld {
       this.worldRoot.add(board);
     }
   }
+  _buildCaveShell(){
+    // The connected demo is a real cavern inside earth, not a map slab floating
+    // against the scene background. Build a low-cost irregular rock envelope
+    // outside the tactical bounds; it frames first-person and TV shots while
+    // leaving the center open for Orbit mode.
+    const stone=stoneMaterial(this.surfaces,{color:0x5f605a,roughness:1,flatShading:true});
+    const darkStone=new THREE.MeshStandardMaterial({color:0x2d322f,roughness:1,flatShading:true});
+    const shell=new THREE.Group();shell.name='Area 1 enclosing cave shell';
+    const addRock=(x,y,z,sx,sy,sz,seed)=>{
+      const geo=new THREE.DodecahedronGeometry(.72+rand(seed,12)*.48,0);
+      const rock=new THREE.Mesh(geo,seed%4===0?darkStone:stone);
+      rock.position.set(x,y,z);rock.scale.set(sx,sy,sz);
+      rock.rotation.set(rand(seed,2)*1.5,rand(seed,4)*6.2,rand(seed,8)*1.25);
+      rock.castShadow=true;rock.receiveShadow=true;shell.add(rock);
+    };
+    const padX=this.worldW/2+1.0,padZ=this.worldH/2+1.0;
+    let seed=0;
+    // Four irregular perimeter ridges, staggered so there is no straight "edge".
+    for(let x=-padX;x<=padX;x+=1.15){
+      addRock(x+(rand(seed,1)-.5)*.5,1.45+rand(seed,3)*1.3,-padZ-(rand(seed,4)*.45),
+        1.1+rand(seed,5)*.8,1.5+rand(seed,6)*1.4,1.1+rand(seed,7)*.65,seed++);
+      addRock(x+(rand(seed,1)-.5)*.5,1.25+rand(seed,3)*1.5,padZ+(rand(seed,4)*.45),
+        1.0+rand(seed,5)*.8,1.5+rand(seed,6)*1.5,1.0+rand(seed,7)*.7,seed++);
+    }
+    for(let z=-padZ+.8;z<=padZ-.8;z+=1.1){
+      addRock(-padX-(rand(seed,4)*.45),1.35+rand(seed,2)*1.4,z+(rand(seed,1)-.5)*.5,
+        1.05+rand(seed,5)*.7,1.5+rand(seed,6)*1.4,1.15+rand(seed,7)*.75,seed++);
+      addRock(padX+(rand(seed,4)*.45),1.35+rand(seed,2)*1.4,z+(rand(seed,1)-.5)*.5,
+        1.05+rand(seed,5)*.7,1.5+rand(seed,6)*1.4,1.15+rand(seed,7)*.75,seed++);
+    }
+    // Broken ceiling shoulders around the perimeter. They overhang only the
+    // borders, preserving overhead tactical visibility over the walkable center.
+    const ceilingY=Math.max(3.4,this.rockHeight+1.8);
+    for(let i=0;i<18;i++){
+      const side=i%4,t=(Math.floor(i/4)+.5)/5-.5;
+      let x=0,z=0;
+      if(side===0){x=t*this.worldW*1.15;z=-padZ+.45;}
+      if(side===1){x=padX-.45;z=t*this.worldH*1.15;}
+      if(side===2){x=t*this.worldW*1.15;z=padZ-.45;}
+      if(side===3){x=-padX+.45;z=t*this.worldH*1.15;}
+      addRock(x,ceilingY+(rand(i,9)-.5)*.5,z,1.7+rand(i,3),.45+.3*rand(i,5),1.4+rand(i,7),200+i);
+    }
+    // Continue the north passage into shadow so it reads as a larger network.
+    const north=this.mapToWorld(.50,.02);
+    for(let i=0;i<9;i++){
+      const z=north.z-1.0-i*.72;
+      addRock(north.x-1.25-rand(i,1)*.45,.95+rand(i,3)*.9,z,1.0,1.3,1.0,300+i);
+      addRock(north.x+1.25+rand(i,2)*.45,.95+rand(i,4)*.9,z,1.0,1.3,1.0,340+i);
+    }
+    const tunnelFloor=new THREE.Mesh(new THREE.BoxGeometry(2.25,.18,7.5),
+      new THREE.MeshStandardMaterial({color:0x403e38,roughness:1}));
+    tunnelFloor.name='Area 1 passage continuing into darkness';
+    tunnelFloor.position.set(north.x,-.12,north.z-3.35);tunnelFloor.receiveShadow=true;shell.add(tunnelFloor);
+    // Under-skirt removes horizon gaps when cameras graze below the map plane.
+    const under=new THREE.Mesh(new THREE.BoxGeometry(this.worldW+5,.42,this.worldH+5),
+      new THREE.MeshStandardMaterial({color:0x292d2a,roughness:1}));
+    under.name='Subterranean earth mass';under.position.y=-.31;under.receiveShadow=true;shell.add(under);
+    this.worldRoot.add(shell);
+  }
   _buildGrid(){
     // 5-foot tactical grid aligned to the image scale, clipped to traversable floor.
     release(this.gridRoot);
@@ -369,7 +436,7 @@ export class TabletopWorld {
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
     }else if(this.connection&&level==='warehouse'){
-      const c=this.connection;this.orbit.target.set(c.x,c.depth,c.z);this.camera.position.set(c.x+8,c.depth+8,c.z+10);this.orbit.update();
+      const c=this.connection;this.orbit.target.set(c.x,c.depth+.35,c.z+.55);this.camera.position.set(c.x+9.5,c.depth+7.1,c.z+12.5);this.orbit.update();
     }else this.recenter();
   }
   upperSpawn(){const c=this.connection;return {x:c.x,z:c.z-1.6};}
