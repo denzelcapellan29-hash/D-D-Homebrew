@@ -13,6 +13,9 @@ on:
       - '.github/workflows/visual-qa.yml'
 permissions:
   contents: write
+concurrency:
+  group: mapforge-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   screenshot-qa:
     runs-on: ubuntu-latest
