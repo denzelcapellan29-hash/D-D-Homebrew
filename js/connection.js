@@ -214,10 +214,20 @@ export function buildConnection(world,c) {
     new THREE.Vector3(anchor.x,c.depth+.10,anchor.z),
     new THREE.Vector3(anchor.x+.07,c.depth*.48,anchor.z+.06),
     new THREE.Vector3(anchor.x,.13,anchor.z)]);
-  const rope=new THREE.Mesh(new THREE.TubeGeometry(curve,80,.032,7,false),new THREE.MeshStandardMaterial({color:0xc7a974,roughness:1}));
-  rope.name='Continuous rope from warehouse to Area 1';root.add(rope);
-  const coil=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,6,28),rope.material);
-  coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';root.add(coil);
+  const ropeMat=new THREE.MeshStandardMaterial({color:0xc7a974,roughness:1});
+  const rope=new THREE.Mesh(new THREE.TubeGeometry(curve,80,.032,7,false),ropeMat);
+  rope.name='Continuous rope inside the fissure';shaft.add(rope);
+  // In Area 1 cutaway view, show only the final hanging section below the cave
+  // ceiling. This prevents the rope from appearing to descend from empty sky.
+  const area1Rope=new THREE.Group();area1Rope.name='Area 1 visible rope tail';area1Rope.visible=false;root.add(area1Rope);
+  const tailCurve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(anchor.x+.04,3.45,anchor.z+.03),
+    new THREE.Vector3(anchor.x+.08,2.25,anchor.z+.06),
+    new THREE.Vector3(anchor.x,.13,anchor.z)
+  ]);
+  const tail=new THREE.Mesh(new THREE.TubeGeometry(tailCurve,36,.032,7,false),ropeMat);tail.name='Rope hanging from cave ceiling';area1Rope.add(tail);
+  const coil=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,6,28),ropeMat);
+  coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';area1Rope.add(coil);
   // Splintered floor structure around the tear; wood, not a decorative ring
   // of rocks, is the dominant edge language inside the warehouse.
   for(let i=0;i<4;i++){
@@ -372,5 +382,5 @@ export function buildConnection(world,c) {
   lantern(root,c.landing.x-.08,1.15,c.z+.53);
   lantern(upper,c.x-2.7,c.depth+1.25,c.z-3.22);
   world.worldRoot.add(root);
-  return {root,upper,shaft,anchor};
+  return {root,upper,shaft,area1Rope,anchor};
 }
