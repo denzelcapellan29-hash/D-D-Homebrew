@@ -340,7 +340,7 @@ export class TabletopWorld {
     this.setCutaway(level==='area1');this._buildGrid();
     if(this.walkMode){
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
-      this.camera.position.set(p.x,this.floorY+1.05,p.z);this.walkYaw=0;this.walkPitch=-.08;this._applyWalkRotation();
+      this._placeExploreCamera(p);
     }else if(this.connection&&level==='warehouse'){
       const c=this.connection;this.orbit.target.set(c.x,c.depth,c.z);this.camera.position.set(c.x+8,c.depth+8,c.z+10);this.orbit.update();
     }else this.recenter();
@@ -367,13 +367,27 @@ export class TabletopWorld {
   recenter(){
     const dim=Math.max(this.worldW,this.worldH);
     if(this.connection&&this.activeLevel==='warehouse'){this.focusLevel('warehouse');return;}
-    if(this.walkMode){const p=this.connection?.landing||this.spawn;this.camera.position.set(p.x,1.05,p.z);this.walkYaw=0;this.walkPitch=0;this._applyWalkRotation();}
+    if(this.walkMode){const p=this.connection?.landing||this.spawn;this._placeExploreCamera(p);}
     else{this.orbit.target.set(0,0,0);this.camera.position.set(dim*.52,dim*.69,dim*.62);this.orbit.update();}
   }
   switchMode(isWalk){
     this.climbing=null;this.walkMode=isWalk;this.orbit.enabled=!isWalk;this.keys.clear();this.walkButtons.clear();
-    if(isWalk){const p=this.activeLevel==='warehouse'&&this.connection?this.upperSpawn():this.connection?.landing||this.spawn;this.camera.position.set(p.x,this.floorY+1.05,p.z);this.walkYaw=0;this.walkPitch=-.04;this._applyWalkRotation();}
+    if(isWalk){const p=this.activeLevel==='warehouse'&&this.connection?this.upperSpawn():this.connection?.landing||this.spawn;this._placeExploreCamera(p);}
     else this.recenter();
+  }
+  _placeExploreCamera(p){
+    // Place the lens away from rock ridges instead of inside the fissure wall.
+    // The Area 1 west-wall landing looks east into the debris chamber.
+    let x=p.x,z=p.z;
+    if(this.activeLevel==='area1'&&this.connection){
+      for(const step of [1.6,1.3,1,.7,.35]){
+        if(this.canStand(p.x+step,p.z,.38,'area1')){x=p.x+step;break;}
+      }
+    }
+    this.camera.position.set(x,this.floorY+1.38,z);
+    this.walkYaw=this.activeLevel==='area1'&&this.connection?Math.PI/2:0;
+    this.walkPitch=-.04;
+    this._applyWalkRotation();
   }
   _applyWalkRotation(){
     const yaw=this.walkYaw,pitch=this.walkPitch;
