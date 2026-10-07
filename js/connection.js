@@ -256,6 +256,19 @@ export function buildConnection(world,c) {
     plank.rotation.y=.45+i*.87;
   }
   const foundationMat=new THREE.MeshStandardMaterial({color:0x454842,roughness:1});
+  // Continuous stone substructure beneath the warehouse footprint, cut around
+  // the same magical rupture. This removes the remaining "floating stage" read
+  // while preserving the open chasm.
+  const baseShape=new THREE.Shape();
+  baseShape.moveTo(-c.halfW-.22,-c.halfH-.22);baseShape.lineTo(c.halfW+.22,-c.halfH-.22);
+  baseShape.lineTo(c.halfW+.22,c.halfH+.22);baseShape.lineTo(-c.halfW-.22,c.halfH+.22);baseShape.closePath();
+  const baseHole=new THREE.Path();
+  rupture.forEach(([x,z],i)=>{const s=1.08;if(i===0)baseHole.moveTo(x*s,z*s);else baseHole.lineTo(x*s,z*s);});
+  baseHole.closePath();baseShape.holes.push(baseHole);
+  const base=new THREE.Mesh(new THREE.ExtrudeGeometry(baseShape,{depth:.34,bevelEnabled:false}),foundationMat);
+  base.name='Warehouse continuous stone substructure';base.rotation.x=-Math.PI/2;
+  base.position.set(c.x,c.depth-.46,c.z);base.castShadow=true;base.receiveShadow=true;upper.add(base);
+
   for(const side of [-1,1])box(upper,'Warehouse stone foundation side',c.x+side*(c.halfW+.12),c.depth-.27,c.z,.28,.46,c.halfH*2+.55,foundationMat);
   box(upper,'Warehouse stone foundation front',c.x,c.depth-.27,c.z+c.halfH+.12,c.halfW*2+.55,.46,.28,foundationMat);
   box(upper,'Warehouse stone foundation rear',c.x,c.depth-.27,c.z-c.halfH-.12,c.halfW*2+.55,.46,.28,foundationMat);
