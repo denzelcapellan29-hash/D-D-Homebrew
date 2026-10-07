@@ -27,8 +27,23 @@ function stoneTexture(){
  }
  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=8;tex.repeat.set(2.0,1.25);return tex;
 }
+function earthTexture(){
+ const c=document.createElement('canvas');c.width=c.height=512;const cx=c.getContext('2d');
+ cx.fillStyle='#474237';cx.fillRect(0,0,512,512);
+ for(let i=0;i<11000;i++){
+  const x=rand(i+100)*512,y=rand(i+209)*512,a=.03+rand(i+17)*.23;
+  cx.fillStyle=rand(i+701)>.5?`rgba(176,160,123,${a})`:`rgba(13,14,13,${a})`;
+  const r=.6+rand(i+312)*6;cx.beginPath();cx.ellipse(x,y,r,r*.47,rand(i+33)*6,0,Math.PI*2);cx.fill();
+ }
+ for(let i=0;i<34;i++){
+  const x=rand(i+855)*512,y=rand(i+999)*512;
+  cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+(rand(i+11)-.5)*45,y+(rand(i+100)-.5)*39);
+  cx.strokeStyle='rgba(19,23,20,.32)';cx.lineWidth=1.3;cx.stroke();
+ }
+ const tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(2.2,1.35);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+}
 function floor(g,w,d,stone=true){
- const c=stoneTexture();const m=new THREE.MeshStandardMaterial({map:c,roughness:1,metalness:0});
+ const c=stone?stoneTexture():earthTexture();const m=new THREE.MeshStandardMaterial({map:c,roughness:1,metalness:0});
  const f=mesh(g,new THREE.PlaneGeometry(w,d),m,0,.018,0);f.rotation.x=-Math.PI/2;f.castShadow=false;
  box(g,w,.3,d,0,-.21,0,M(stone?0x595851:0x35322e));return f;
 }
@@ -41,6 +56,7 @@ function debris(g,w,d,count=70,seed=0){
 function masonry(g,w,d,height=2.35){
  const m=M(0x504e47),cap=M(0x777166);const t=.48;
  for(const [horizontal,side] of [[true,-1],[true,1],[false,-1],[false,1]]){
+  if(horizontal && side===1)continue; // player-view cutaway: do not block the chamber foreground
   const L=horizontal?w:d,N=Math.ceil(L/1.15);
   for(let i=0;i<N;i++){
    const v=-L/2+(i+.5)*L/N,jitter=(rand(i+(side<0?17:39))-.5)*.06;
@@ -82,7 +98,7 @@ function makeTrials(g){
  for(const z of [-5.6,5.6])torch(g,-10.6,z,0xffa95d);
  for(const z of [-5.6,5.6])torch(g,10.7,z,0xffb460);
  debris(g,w-4,d-2,14,19);
- return {camera:new V(-.8,8.6,16.7),target:new V(0,.62,0),pulse};
+ return {camera:new V(-.8,10.2,15.2),target:new V(0,.62,0),pulse};
 }
 function pressure(g,x,w,d,m){const plate=box(g,w,.045,d,x,.064,0,m);plate.castShadow=false;
  for(const a of [-1,1])for(const b of [-1,1])sphere(g,.047,x+a*(w/2-.13),.09,b*(d/2-.13),BRASS);
@@ -110,7 +126,7 @@ function makeTraps(g){
  // Double door corresponding to the locked passage.
  for(const z of [-.76,.76]){box(g,.16,2.4,1.5,9.8,1.2,z,M(0x81786d));box(g,.18,.13,.16,9.65,1.1,z+Math.sign(z)*-.18,BRASS);}
  torch(g,-9.5,-4.35);torch(g,8.45,4.35,0xffc379);
- return {camera:new V(-.5,8.3,17.9),target:new V(.5,.34,0),pulse:[]};
+ return {camera:new V(-.5,9.4,15.0),target:new V(.5,.34,0),pulse:[]};
 }
 function cocoon(g,x,z,size=1){
  const silk=M(0xcecab9,.98);const mat=M(0xeae5d9,.9,{transparent:true,opacity:.4});
@@ -140,10 +156,11 @@ function makeDeath(g){
  // Dust-filled hollow where the giant spider is concealed in the printed encounter.
  const hollow=cyl(g,2.65,2.9,.04,2.2,.046,-.9,M(0x302d29),32);hollow.castShadow=false;
  for(const [x,z,r] of [[-9,-1.4,.75],[-6.3,4.4,.58],[2.2,5,.89],[8.3,3.1,.72],[6.9,-4.7,.55]])cocoon(g,x,z,r);
- for(let i=0;i<85;i++){
-  const a=rand(i+29)*Math.PI*2,x=Math.cos(a)*w*.42,z=Math.sin(a)*d*.43;
-  const e=[x+(rand(i+47)-.5)*3,1.8+rand(i+65)*2,z+(rand(i+75)-.5)*2];
-  line(g,[x,.12,z],e);
+ // Silk sheets cling to the outer cave walls, not a lattice suspended in empty space.
+ for(let i=0;i<40;i++){
+  const a=rand(i+29)*Math.PI*2,x=Math.cos(a)*w*.44,z=Math.sin(a)*d*.44;
+  const b=[x+(rand(i+47)-.5)*1.6,.5+rand(i+65)*1.7,z+(rand(i+75)-.5)*1.7];
+  line(g,[x,.2,z],b);
  }
  spider(g,2.1,-.85);
  for(let i=0;i<13;i++){
@@ -151,7 +168,7 @@ function makeDeath(g){
   segment(g,[x,.11,z],[x+.35,.11,z+.2],.045,M(0xa5a18c));
  }
  const pulse=[torch(g,-8.6,-5.2,0xffb767),torch(g,7.1,-5.5,0x86b9cd)];
- return {camera:new V(-.8,8.5,17.4),target:new V(.2,.7,0),pulse};
+ return {camera:new V(-.8,9.5,15.6),target:new V(.2,.7,0),pulse};
 }
 function makeGoblin(g){const w=20,d=14;cave(g,w,d,120);
  for(let i=0;i<21;i++){const x=(rand(i+102)-.5)*w*.75,z=(rand(i+122)-.5)*d*.78;
