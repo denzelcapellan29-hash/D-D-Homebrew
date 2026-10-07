@@ -98,7 +98,7 @@ export function buildConnection(world,c) {
   // silhouette, then ring it with a short fractured inner wall.
   const mouthShape=new THREE.Shape();
   rupture.forEach(([x,z],i)=>{if(i===0)mouthShape.moveTo(x,z);else mouthShape.lineTo(x,z);});mouthShape.closePath();
-  const mouthMat=new THREE.MeshBasicMaterial({color:0x070a0b,side:THREE.DoubleSide});
+  const mouthMat=new THREE.MeshBasicMaterial({color:0x05080a,transparent:true,opacity:.68,depthWrite:false,side:THREE.DoubleSide});
   const mouth=new THREE.Mesh(new THREE.ShapeGeometry(mouthShape),mouthMat);
   mouth.name='Deep black fissure mouth';mouth.rotation.x=-Math.PI/2;
   mouth.position.set(c.x,c.depth-.32,c.z);upper.add(mouth);
@@ -215,21 +215,27 @@ export function buildConnection(world,c) {
   }
   box(upper,'Warehouse back wall',c.x,c.depth+.88,c.z-c.halfH,c.halfW*2,1.76,.26,wallStone);
   box(upper,'Exposed roof crossbeam',c.x,c.depth+3.65,c.z-2.8,8.1,.22,.25,darkWood);
-  // Readable half-collapsed gable: two broad surviving rear planes plus a
-  // single broken front remnant. Fewer, larger masses read as a damaged roof
-  // instead of floating strips.
+  // Mostly-collapsed roof: exposed timber trusses dominate, with only a few
+  // coherent tile sections still hanging from the rear gable. This reads as a
+  // ruined warehouse rather than a collection of floating roof strips.
   const pitch=.42;
   for(const side of [-1,1]){
-    for(const z of [-2.7,-1.15]){
-      const beam=box(upper,'Exposed sloping timber rafter',c.x+side*2.0,c.depth+3.24,c.z+z,4.35,.16,.18,darkWood);
+    for(const z of [-2.85,-1.45,-.15]){
+      const beam=box(upper,'Exposed sloping timber rafter',c.x+side*1.95,c.depth+3.18,c.z+z,4.15,.15,.17,darkWood);
       beam.rotation.z=-side*pitch;
     }
-    const rear=box(upper,'Surviving rear gable roof',c.x+side*1.95,c.depth+3.34,c.z-2.15,4.0,.09,2.45,roofTiles.clone());
+    const rear=box(upper,'Surviving rear roof section',c.x+side*1.78,c.depth+3.34,c.z-2.35,3.55,.085,1.55,roofTiles.clone());
     rear.rotation.z=-side*pitch;
-    const broken=box(upper,'Broken front roof remnant',c.x+side*2.65,c.depth+3.02,c.z+.05,1.7,.085,.88,roofTiles.clone());
-    broken.rotation.z=-side*pitch;broken.rotation.y=side*.035;
+    if(side<0){
+      const torn=box(upper,'Hanging broken roof section',c.x-2.35,c.depth+3.02,c.z-.55,1.65,.08,.95,roofTiles.clone());
+      torn.rotation.z=pitch;torn.rotation.y=-.08;
+    }
   }
-  box(upper,'Weathered ridge beam',c.x,c.depth+4.02,c.z-2.05,.28,.30,4.0,darkWood);
+  box(upper,'Weathered ridge beam',c.x,c.depth+3.96,c.z-2.18,.25,.27,3.55,darkWood);
+  // One snapped rafter leans into the collapse, visually tying roof failure to
+  // the floor rupture.
+  const snapped=box(upper,'Snapped roof rafter',c.x+1.35,c.depth+1.95,c.z-.25,.18,3.15,.18,darkWood);
+  snapped.rotation.z=.48;snapped.rotation.y=-.24;
   // A few masonry chunks sit where walls failed; keep the center readable.
   for(let i=0;i<5;i++){
     const angle=i*1.31+.42,rad=1.75+(i%2)*.32;
