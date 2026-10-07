@@ -1,5 +1,8 @@
-AssertionError [ERR_ASSERTION]: 2D map not displayed
+page.screenshot: Timeout 30000ms exceeded.
+Call log:
+  - taking page screenshot
+  - waiting for fonts to load...
+  - fonts loaded
 
-0 !== 1
-
-    at run (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:44:9)
+    at shot (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:16:43)
+    at run (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:39:92)
