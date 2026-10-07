@@ -138,6 +138,14 @@ export function buildConnection(world,c) {
     }
   };
   fracture(.18,1.85,.075,1);fracture(2.58,1.30,.065,2);fracture(-1.54,1.05,.06,3);
+  const scorch=new THREE.MeshBasicMaterial({color:0x171513,transparent:true,opacity:.55,depthWrite:false});
+  const scorchBranch=(angle,length)=>{
+    const geo=new THREE.PlaneGeometry(.07,length);
+    const m=new THREE.Mesh(geo,scorch);m.rotation.x=-Math.PI/2;m.rotation.z=-angle;
+    m.position.set(c.x+Math.cos(angle)*(c.r+length*.5),c.depth+.028,c.z+Math.sin(angle)*(c.r+length*.5));
+    m.name='Scorched fracture branch';upper.add(m);
+  };
+  scorchBranch(.72,1.15);scorchBranch(-2.18,.92);scorchBranch(2.92,.72);
 
   // Slumped floor plates make the failure read as structural collapse rather
   // than a decorative aperture.
@@ -214,6 +222,14 @@ export function buildConnection(world,c) {
     box(upper,'Standing timber post',c.x+side*3.8,c.depth+1.9,c.z-2.8,.23,3.8,.23,darkWood);
   }
   box(upper,'Warehouse back wall',c.x,c.depth+.88,c.z-c.halfH,c.halfW*2,1.76,.26,wallStone);
+  // Broken front-corner returns frame the ruin from the hero camera. The
+  // center stays open as the damaged entrance, but the building no longer
+  // reads as a roof perched over a three-sided stage.
+  for(const side of [-1,1]){
+    box(upper,'Broken warehouse front wall',c.x+side*3.55,c.depth+.58,c.z+c.halfH-.04,1.8,1.16,.28,wallStone);
+    const post=box(upper,'Splintered front corner post',c.x+side*4.16,c.depth+1.08,c.z+c.halfH-.12,.22,2.16,.22,darkWood);
+    post.rotation.z=side*.045;
+  }
   box(upper,'Exposed roof crossbeam',c.x,c.depth+3.65,c.z-2.8,8.1,.22,.25,darkWood);
   // Mostly-collapsed roof: exposed timber trusses dominate, with only a few
   // coherent tile sections still hanging from the rear gable. This reads as a
