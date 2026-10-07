@@ -33,7 +33,14 @@ async function setPresentation(scene){
  }
 
  presentation.replaceChildren();presentation.classList.remove('blackout','reveal','focus');
- if(scene?.type==='room3d'){presentationMode='room3d';presentation.style.display='none';status.hidden=true;enterRoom(scene);return;}
+ if(scene?.type==='room3d'){
+  presentationMode='room3d';status.hidden=true;enterRoom(scene);
+  if(presentation.style.display!=='none'&&presentation.childNodes.length){
+   presentation.classList.add('departing');
+   setTimeout(()=>{if(seq!==presentationSeq)return;presentation.style.display='none';presentation.replaceChildren();presentation.classList.remove('departing','reveal','focus');},460);
+  }else presentation.style.display='none';
+  return;
+ }
  pendingRoom=null;
  if(!scene||scene.type==='live'){presentationMode='live';presentation.style.display='none';return;}
  presentationMode=scene.type;presentation.style.display='block';status.hidden=true;
