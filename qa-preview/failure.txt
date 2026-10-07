@@ -1,8 +1,0 @@
-page.screenshot: Timeout 30000ms exceeded.
-Call log:
-  - taking page screenshot
-  - waiting for fonts to load...
-  - fonts loaded
-
-    at shot (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:16:43)
-    at run (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:39:92)
