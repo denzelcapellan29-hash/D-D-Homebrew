@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11161a">
+  <title>MapForge 3D — Battlemap to tabletop</title>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./js/vendor/three.module.js",
+      "three/addons/": "./js/vendor/addons/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a href="#" class="brand" aria-label="MapForge 3D home"><span class="brand-mark">◆</span><span>MAPFORGE<span class="brand-light">/3D</span></span></a>
+      <div class="topbar-middle"><span class="live-indicator"></span><span id="mapTitle">AREA 01 · THE RAT FISSURE</span></div>
+      <div class="topbar-actions"><span class="version">CINEMA v0.5</span><button id="openTV" class="button" type="button">▣ Open TV View</button><button id="loadDemo" class="button quiet" type="button">Reset demo</button></div>
+    </header>
+
+    <div class="workbench">
+      <aside class="sidebar" aria-label="Map settings and terrain editor">
+        <section class="section-intro">
+          <div class="kicker">01 / SOURCE</div>
+          <h1>Your dungeon.<br><em>In three dimensions.</em></h1>
+          <p>Explore the warehouse and cave, manage your party, or import another battlemap.</p>
+        </section>
+
+        <section class="panel episode-panel" id="episodePanel">
+          <div class="kicker">EPISODE 1 / SHOW CONTROL</div><h2>Cinematic scene director</h2>
+          <p class="microcopy">Send a scene to the TV with one click. This is presentation mode: Areas 2, 3 and 5 now have cinematic 3D rooms. You can instantly switch to each original 2D map for tactical clarity.</p>
+          <label for="episodeScene">Scene to show</label><select id="episodeScene" aria-label="Episode scene"></select>
+          <div class="resource-actions"><button id="episodePrev" class="button slim" type="button">← Previous</button><button id="episodeShow" class="button primary slim" type="button">Show on TV</button><button id="episodeNext" class="button slim" type="button">Next →</button></div>
+          <div class="resource-actions"><button id="episodeMap" class="button slim" type="button">Show original 2D map</button><button id="episodeBlackout" class="button slim" type="button">Blackout TV</button><button id="episodeLive" class="button slim" type="button">Return to live 3D</button></div>
+          <p id="episodeStatus" class="microcopy" aria-live="polite">Select a scene, then press Show on TV.</p>
+          <details open><summary>DM-only scene reminder</summary><p id="episodeNote" class="microcopy"></p></details>
+          <p class="microcopy">Shortcuts when not typing: → / ← change scene; Space sends selected scene; B blacks out; L returns to 3D.</p>
+        </section>
+
+        <section class="panel" id="connectionPanel">
+          <div class="kicker">CONNECTED LEVELS</div><h2>Warehouse fissure</h2>
+          <p class="microcopy">The rope descends into the west side of Area 1, beside the debris chamber. Footprints continue north.</p>
+          <div class="resource-actions"><button id="viewConnection" class="button slim" type="button">View both levels</button><button id="viewWarehouse" class="button slim" type="button" aria-pressed="false">Warehouse</button><button id="viewArea1" class="button slim" type="button" aria-pressed="true">Area 1</button></div>
+          <p id="activeLevel" class="microcopy" aria-live="polite">Area 1 · cave level</p>
+          <button id="useRope" class="button primary full" type="button" disabled>↑ Climb rope to warehouse</button>
+          <p class="microcopy">Choose a level, enter Explore, then use the rope near its landing.</p>
+          <details class="shaft-settings"><summary>View and shaft settings</summary>
+          <label for="shaftDepth">Shaft depth <output id="shaftDepthVal">60 ft</output></label>
+          <input id="shaftDepth" type="range" min="20" max="150" step="5" value="60">
+          <p class="microcopy">60 ft is a provisional depth; adjust it to match your adventure.</p>
+          <label><input id="cutawayToggle" type="checkbox"> Hide upper structure to reveal the cave</label>
+          </details>
+          <details><summary>Warehouse reference</summary><img src="./assets/warehouse-reference.png" alt="Ruined warehouse with a rope descending into its fissure" style="width:100%;margin-top:10px"></details>
+        </section>
+
+        <section class="panel" id="miniaturePanel">
+          <div class="kicker">YOUR PARTY</div><h2>Miniatures</h2>
+          <p class="microcopy">Select a piece in the scene or choose it below. Drag it near the rope to change floors.</p>
+          <button id="addLandingHero" type="button" class="button slim full">Add hero at this landing</button>
+          <label for="miniatureSelect">Selected miniature</label>
+          <select id="miniatureSelect"><option value="">No miniature selected</option></select>
+          <label for="miniatureName">Name</label><input id="miniatureName" type="text" maxlength="60" placeholder="Name your character" disabled>
+          <div class="resource-actions miniature-actions"><button id="renameMiniature" class="button slim" type="button" disabled>Rename</button><button id="focusMiniature" class="button slim" type="button" disabled>Focus</button><button id="transferMiniature" class="button slim" type="button" disabled>Use rope</button><button id="removeMiniature" class="button quiet slim" type="button" disabled>Remove</button></div>
+          <p id="miniatureStatus" class="microcopy" aria-live="polite">Select a miniature first.</p>
+        </section>
+
+        <section class="panel" id="appearancePanel">
+          <div class="kicker">ATMOSPHERE</div><h2>Light the scene</h2>
+          <label for="lightingMode">Lighting</label><select id="lightingMode"><option value="tabletop">Tabletop · bright and readable</option><option value="torchlit">Torchlit · dungeon atmosphere</option></select>
+          <label class="check-label"><input id="lanternToggle" type="checkbox" checked> Carry a lantern in Explore</label>
+          <p class="microcopy">Stone and timber have textured surfaces. Lantern light follows you as you explore.</p>
+        </section>
+
+        <details class="advanced-controls"><summary>Import a map &amp; terrain settings</summary>
+        <section class="panel">
+          <label class="uploadbox" id="uploadArea" for="mapFile">
+            <span class="upload-icon">⤒</span>
+            <span class="upload-label">Upload battlemap</span>
+            <span class="upload-sub">PNG · JPG · WEBP</span>
+            <input id="mapFile" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload a battlemap">
+          </label>
+          <div class="image-filename"><span class="status-dot"></span><span id="filename">area-1-rats.png</span></div>
+          <label for="preset">Conversion mode</label>
+          <select id="preset">
+            <option value="curated">Area 1 · optimized demo mask</option>
+            <option value="cave">Auto detect · caves / ruins</option>
+            <option value="dungeon">Auto detect · dungeons</option>
+            <option value="relief">Topographic relief</option>
+          </select>
+          <label for="sensitivity">Walkable floor sensitivity <output id="sensitivityVal">46%</output></label>
+          <input type="range" id="sensitivity" min="20" max="85" value="46">
+          <div class="two-col">
+            <div><label for="gridPixels">Pixels / 5 ft square</label><input id="gridPixels" type="number" min="10" max="300" step="1" value="58"></div>
+            <div><label for="wallHeight">Wall height <output id="wallHeightVal">10 ft</output></label><input id="wallHeight" type="range" min="5" max="25" value="10" step="1"></div>
+          </div>
+          <button id="generate" type="button" class="button primary full">⟡ &nbsp; Generate 3D world</button>
+        </section>
+
+        </details>
+
+        <section class="panel editor-panel">
+          <div class="panel-head"><div><div class="kicker">02 / GEOMETRY</div><h2>Walkable mask</h2></div><span class="badge">EDITABLE</span></div>
+          <p class="microcopy">Green = floor · Umber = raised terrain. Paint to fix areas the detector misses.</p>
+          <div class="map-editor-frame"><canvas id="maskEditor" width="256" height="384" tabindex="0" role="img" aria-label="Battlemap with walkable area preview. Paint using mouse or touch."></canvas></div>
+          <div class="modebar" role="group" aria-label="Mask painting tool">
+            <button id="paintFloor" type="button" class="tool selected" aria-pressed="true">✎ Floor</button>
+            <button id="paintRock" type="button" class="tool" aria-pressed="false">▧ Rock</button>
+            <button id="paintPan" type="button" class="tool" aria-pressed="false">⌕ Inspect</button>
+          </div>
+          <label for="brush">Brush width <output id="brushVal">3</output></label>
+          <input id="brush" type="range" min="1" max="12" value="3">
+          <div class="inline-actions"><button id="applyMask" class="button slim" type="button">Update geometry</button><button id="redetect" class="button quiet slim" type="button">Auto detect again</button></div>
+        </section>
+
+        <section class="panel resources">
+          <div class="kicker">03 / EXPORT</div><h2>Make it yours</h2>
+          <p class="microcopy">Save the project for further edits or export a textured mesh for other 3D tools.</p>
+          <div class="resource-actions"><button id="saveProject" class="button slim" type="button">Save project (.json)</button><button id="openProject" class="button slim" type="button">Open project</button><input id="projectFile" type="file" accept=".json,application/json" hidden><button id="exportGlb" class="button slim" type="button">Export model (.glb)</button><button id="screenshot" class="button slim" type="button">Screenshot (.png)</button></div>
+        </section>
+        <div class="sidebar-bottom">All conversion occurs in your browser. No uploaded map is sent to a server. <strong>Three.js is bundled; no internet connection needed after download.</strong></div>
+      </aside>
+
+      <main class="stage">
+        <div class="viewport-wrap">
+          <div id="viewport" aria-label="Interactive 3D tabletop view"></div>
+          <div class="viewport-top">
+            <div class="view-title"><div class="eyebrow">LIVE SCENE</div><strong id="sceneName">The Rat Fissure</strong><span id="sceneMetrics">~18 × 27 squares · 5 ft grid</span></div>
+            <div class="segmented" role="group" aria-label="Camera mode"><button id="orbitMode" type="button" class="active" aria-pressed="true">↻ Orbit</button><button id="walkMode" type="button" aria-pressed="false">♟ Explore</button></div>
+          </div>
+          <div class="viewport-bottom">
+            <div class="cam-hint" id="camHint">Drag to orbit · Scroll to zoom · Click a miniature to select</div>
+            <div class="viewport-utilities"><button id="gridToggle" type="button" class="utility active" aria-pressed="true">▦ GRID</button><button id="recenter" type="button" class="utility">⌖ RECENTER</button></div>
+          </div>
+          <div class="walk-controls" id="walkControls" hidden><div class="walk-hint">W A S D to move · Drag to look · E to use rope</div><div class="walk-row"><button type="button" data-move="forward">▲</button></div><div class="walk-row"><button type="button" data-move="left">◀</button><button type="button" data-move="back">▼</button><button type="button" data-move="right">▶</button></div></div>
+          <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite"><div class="loading-glyph">◆</div><div id="loadingText">Initializing tabletop renderer…</div><p>Loading the 3D engine and terrain</p></div>
+        </div>
+
+        <div class="bottom-panel">
+          <div class="bottom-left"><div class="kicker">THE TABLETOP</div><div class="toolrow" role="group" aria-label="Tokens and scene actions"><button id="tokenNone" class="chip selected" type="button">☞ Inspect</button><button id="tokenHero" class="chip" type="button">♙ Add hero</button><button id="tokenEnemy" class="chip" type="button">♟ Add foe</button><button id="clearTokens" class="chip subdued" type="button">Clear tokens</button></div></div>
+          <div class="bottom-right"><div class="kicker">QUICK ROLL</div><div class="dice-line"><button id="rollD20" class="die" type="button" aria-label="Roll a twenty-sided die">D20</button><div><span id="diceResult" class="dice-value">—</span><span id="diceLabel" class="dice-caption">Ready to roll</span></div></div></div>
+        </div>
+        <div class="toast" id="toast" aria-live="polite"></div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
