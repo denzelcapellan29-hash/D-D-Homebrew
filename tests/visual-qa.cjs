@@ -40,6 +40,7 @@ async function run(){
   assert.ok(await tv.locator('#screen canvas').count(),`${id} canvas missing`);
   await shot(tv,name);
  }
+ await dm.locator('#episodeScene').selectOption({label:'Area 2 · Trials'});
  await dm.locator('#episodeMap').click();await nap(700);await shot(tv,'07-tv-map');
  assert.equal(await tv.locator('#cinemaPresentation img').count(),1,'2D map not displayed');
  await dm.locator('#episodeBlackout').click();await nap(500);await shot(tv,'08-tv-blackout');
