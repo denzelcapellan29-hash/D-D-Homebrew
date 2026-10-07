@@ -13,7 +13,7 @@ const errors=[];
 const nap=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitForServer(){for(let i=0;i<80;i++){try{const r=await fetch(`http://127.0.0.1:${port}/`);if(r.ok)return;}catch{}await nap(250);}throw Error('Local HTTP server did not start');}
 function observe(page,name){page.on('pageerror',e=>errors.push(`${name} PAGEERROR: ${e.message}`));page.on('console',m=>{if(m.type()==='error')errors.push(`${name} CONSOLE: ${m.text()}`);});}
-async function shot(page,name){await page.screenshot({path:path.join(out,name+'.png'),fullPage:false});}
+async function shot(page,name){await page.screenshot({path:path.join(out,name+'.png'),fullPage:false,timeout:60000});}
 async function run(){
  server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{cwd:root,stdio:'ignore'});
  await waitForServer();
