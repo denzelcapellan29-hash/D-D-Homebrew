@@ -171,23 +171,26 @@ function spider(g,x,z){
  return body;
 }
 function makeDeath(g){
- const w=23,d=13.8;cave(g,w,d,40);
+ const w=25,d=15.5;cave(g,w,d,40);
  // Dust-filled hollow where the giant spider is concealed in the printed encounter.
- const hollow=cyl(g,2.65,2.9,.04,2.2,.046,-.9,M(0x302d29),32);hollow.castShadow=false;
- for(const [x,z,r] of [[-9,-1.4,.75],[-6.3,4.4,.58],[2.2,5,.89],[8.3,3.1,.72],[6.9,-4.7,.55]])cocoon(g,x,z,r);
- // Silk sheets cling to the outer cave walls, not a lattice suspended in empty space.
- for(let i=0;i<40;i++){
+ const hollow=cyl(g,3.0,3.25,.045,2.5,.046,-1.0,M(0x292725),36);hollow.castShadow=false;
+ // Fewer, larger cocoons make each silhouette readable from a television.
+ for(const [x,z,r] of [[-9.5,-1.8,.88],[-6.7,4.8,.72],[1.8,5.4,.98],[8.9,3.4,.82],[7.5,-5.0,.69]])cocoon(g,x,z,r);
+ // Dense web curtains stay at the perimeter instead of filling the middle.
+ for(let i=0;i<52;i++){
   const a=rand(i+29)*Math.PI*2,x=Math.cos(a)*w*.44,z=Math.sin(a)*d*.44;
-  const b=[x+(rand(i+47)-.5)*1.6,.5+rand(i+65)*1.7,z+(rand(i+75)-.5)*1.7];
-  line(g,[x,.2,z],b);
+  const b=[x+(rand(i+47)-.5)*1.8,.7+rand(i+65)*2.1,z+(rand(i+75)-.5)*1.9];
+  line(g,[x,.25,z],b);
  }
- spider(g,2.1,-.85);
- for(let i=0;i<13;i++){
-  const x=(rand(i+222)-.5)*w*.8,z=(rand(i+412)-.5)*d*.6;
+ // Larger, slightly raised spider with a lower camera for a stronger reveal.
+ spider(g,2.4,-1.05);
+ for(let i=0;i<18;i++){
+  const x=(rand(i+222)-.5)*w*.78,z=(rand(i+412)-.5)*d*.62;
   segment(g,[x,.11,z],[x+.35,.11,z+.2],.045,M(0xa5a18c));
  }
- const pulse=[torch(g,-8.6,-5.2,0xffb767),torch(g,7.1,-5.5,0x86b9cd)];
- return {camera:new V(-.8,9.5,15.6),target:new V(.2,.7,0),pulse};
+ // Cool backlight through the webbed rear wall plus a warm entry torch.
+ const pulse=[torch(g,-9.4,-5.8,0xffb767),torch(g,7.9,-5.9,0x86b9cd)];
+ return {camera:new V(-1.2,6.9,16.8),target:new V(1.0,.92,-.35),pulse};
 }
 function makeGoblin(g){
  const w=22,d=15;cave(g,w,d,120);
@@ -233,27 +236,39 @@ function makeGoblin(g){
  const pulse=[torch(g,5.2,-3.8),torch(g,-7.0,4.5,0xff9b55)];
  return {camera:new V(1.6,5.9,14.0),target:new V(x,1.22,z),pulse};
 }
-function makeStomp(g){const w=23,d=14;cave(g,w,d,210);
+function makeStomp(g){
+ const w=25,d=15;cave(g,w,d,210);
  const foot=M(0x735c47),nail=M(0x9f8b73);
- for(let i=0;i<74;i++){
-  const x=(rand(i+12)-.5)*w*.83,z=(rand(i+36)-.5)*d*.73,s=.21+rand(i+56)*.24;
-  const p=sphere(g,s,x,.07,z,foot);p.scale.set(.65,.32,1.36);p.rotation.y=rand(i+100)*6;
-  for(let toe=0;toe<3;toe++)sphere(g,s*.24,x+(toe-1)*s*.38,.08,z+s,nail);
+ // Environmental evidence, not a carpet of tiny feet: several enormous,
+ // overlapping impressions lead toward the suspended threat.
+ for(let i=0;i<18;i++){
+  const x=(rand(i+12)-.5)*w*.70,z=-5.6+i*.62+(rand(i+36)-.5)*.8,s=.48+rand(i+56)*.30;
+  const p=sphere(g,s,x,.045,z,foot);p.scale.set(.78,.18,1.48);p.rotation.y=(rand(i+100)-.5)*.5;
+  for(let toe=0;toe<4;toe++)sphere(g,s*.22,x+(toe-1.5)*s*.30,.055,z+s*.90,nail);
  }
- // A suspended enormous granite foot: toes face the party, and the sole has
- // distinct heel/arch and carved toe joints instead of a rectangular block.
- const granite=M(0x64625e),toeStone=M(0x7c7a6f);
- const sole=sphere(g,1.78,0,3.55,-.3,granite,2);sole.scale.set(1.14,.41,1.56);sole.rotation.z=-.045;
- const heel=sphere(g,1.0,0,3.62,-1.9,granite,1);heel.scale.set(1,.65,.75);
+ // Main stomp crater: cracked dark earth beneath the looming foot.
+ const crater=cyl(g,3.1,3.5,.05,.2,.04,.15,M(0x242320),36);crater.castShadow=false;
+ for(let i=0;i<14;i++){
+  const a=i/14*Math.PI*2,r=3.0+(i%3)*.24;
+  segment(g,[Math.cos(a)*1.1,.06,Math.sin(a)*1.1],[Math.cos(a)*r,.06,Math.sin(a)*r],.025,M(0x171716),5);
+ }
+ // Suspended giant granite foot: clearly foot-shaped, much larger, and tilted
+ // toward the party so the absurd danger reads immediately.
+ const granite=M(0x66635e),toeStone=M(0x827d72);
+ const sole=sphere(g,2.15,.2,4.35,-.1,granite,2);sole.scale.set(1.22,.38,1.72);sole.rotation.x=.10;sole.rotation.z=-.05;
+ const heel=sphere(g,1.18,.2,4.28,-2.25,granite,2);heel.scale.set(1.03,.58,.90);
  for(let toe=0;toe<5;toe++){
-  const x=(toe-2)*.68, size=toe===0?.76:toe===1?.66:.58-(toe-2)*.065;
-  const t=sphere(g,size,x,3.44,2.05-((toe-1.8)**2)*.09,toeStone,2);
-  t.scale.set(.62,.48,.96);
-  // chipped granite edges
-  sphere(g,.075,x,3.18,2.28-((toe-1.8)**2)*.09,M(0xaaa596),1);
+  const x=.2+(toe-2)*.82,size=toe===0?.90:toe===1?.79:.70-(toe-2)*.075;
+  const t=sphere(g,size,x,4.10,2.35-((toe-1.8)**2)*.11,toeStone,2);
+  t.scale.set(.67,.42,1.05);
  }
- for(let i=0;i<4;i++)segment(g,[i<2?-1.1:1.1,4.0,i%2?-1.1:1.1],[i<2?-2.3:2.3,5.4,i%2?-2.1:2.1],.10,DARK);
- const pulse=[torch(g,-9,-4),torch(g,9,4)];return {camera:new V(-.2,8.9,15.9),target:new V(0,1.4,0),pulse};}
+ // Heavy suspension rig disappearing upward into darkness.
+ for(const [x,z] of [[-1.3,-1.3],[-1.25,1.1],[1.55,-1.25],[1.55,1.15]]){
+  segment(g,[x,4.75,z],[x*1.65,6.6,z*1.65],.11,DARK);
+ }
+ const pulse=[torch(g,-9.8,-4.6),torch(g,9.8,4.5)];
+ return {camera:new V(-.4,7.1,17.0),target:new V(.2,2.15,.25),pulse};
+}
 function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
  const waterMat=M(0x285249,.27,{metalness:.27,transparent:true,opacity:.9,emissive:0x082c25,emissiveIntensity:.5});
  cyl(g,4.0,4.0,.12,0,.05,0,M(0x101b1b),64);cyl(g,3.65,3.65,.035,0,.11,0,waterMat,64);ring(g,4.09,.24,0,.21,0,STONE);
