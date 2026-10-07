@@ -1,0 +1,53 @@
+name: MapForge visual QA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'tv.html'
+      - 'js/**'
+      - 'css/**'
+      - 'assets/**'
+      - 'tests/**'
+      - '.github/workflows/visual-qa.yml'
+jobs:
+  screenshot-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium and Playwright
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Capture Orbit, Explore, TV, and Episode 1 scenes
+        run: node tests/visual-qa.cjs
+      - name: Validate image frames are not empty
+        if: success()
+        run: |
+          python -m pip install pillow
+          python - <<'PY'
+          from PIL import Image, ImageStat
+          from pathlib import Path
+          for f in sorted(Path('qa-artifacts').glob('*.png')):
+              im=Image.open(f).convert('RGB')
+              stat=ImageStat.Stat(im)
+              print(f.name, im.size, 'stddev:', [round(x,2) for x in stat.stddev])
+              assert im.width >= 800 and im.height >= 450, f'{f} too small'
+              if 'blackout' not in f.name:
+                  assert max(stat.stddev) > 7, f'{f} appears blank/uniform'
+          PY
+      - name: Upload QA screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapforge-visual-qa
+          path: qa-artifacts/
+          if-no-files-found: warn
