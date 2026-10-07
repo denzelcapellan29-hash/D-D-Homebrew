@@ -21,6 +21,13 @@ async function run(){
  browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--no-sandbox']});
  const context=await browser.newContext({viewport:{width:1600,height:900},deviceScaleFactor:1});
  const dm=await context.newPage();directorPage=dm;observe(dm,'director');
+ // Test the hybrid-cinema controls with a synthetic local manifest. Private
+ // campaign art remains outside the public repository; existing map art is
+ // sufficient here to verify reveal/focus transport and TV presentation modes.
+ await dm.route('**/assets/cinema/manifest.json',route=>route.fulfill({
+  status:200,contentType:'application/json',
+  body:JSON.stringify({version:99,scenes:{trials:{hero:'./assets/episode1/area2.jpg',focus:'./assets/episode1/area2.jpg'}}})
+ }));
  await dm.goto(`http://127.0.0.1:${port}/index.html`,{waitUntil:'domcontentloaded'});
  await dm.locator('#loadingOverlay').waitFor({state:'hidden',timeout:45000});
  assert.ok(await dm.locator('#viewport canvas').count(),'WebGL canvas missing');
@@ -51,12 +58,18 @@ async function run(){
   await shot(tv,name);
  }
  await dm.locator('#episodeScene').selectOption({label:'Area 2 · Trials'});
+ await dm.locator('#episodeReveal').click();await nap(700);await shot(tv,'04a-trials-cinematic-reveal');
+ assert.ok(await tv.locator('#cinemaPresentation').evaluate(el=>el.classList.contains('reveal')),'Cinematic Reveal mode not active');
+ assert.equal(await tv.locator('#cinemaPresentation img').count(),1,'Cinematic reveal image not displayed');
+ await dm.locator('#episodeFocus').click();await nap(700);await shot(tv,'04b-trials-focus-detail');
+ assert.ok(await tv.locator('#cinemaPresentation').evaluate(el=>el.classList.contains('focus')),'Focus Detail mode not active');
+ assert.equal(await tv.locator('#cinemaPresentation img').count(),1,'Focus-detail image not displayed');
  await dm.locator('#episodeMap').click();await nap(700);await shot(tv,'07-tv-map');
  assert.equal(await tv.locator('#cinemaPresentation img').count(),1,'2D map not displayed');
  await dm.locator('#episodeBlackout').click();await nap(500);await shot(tv,'08-tv-blackout');
  assert.ok(await tv.locator('#cinemaPresentation').evaluate(el=>el.classList.contains('blackout')),'Blackout did not work');
  fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({webgl:'passed',orbit:'passed',explore:'passed',tv:'passed',scenes:indices.map(x=>x[0]),errors},null,2));
  if(errors.length)throw Error(errors.join('\n').slice(0,4000));
- console.log('PASS: WebGL + orbit + first-person + TV + 3D scenes + map + blackout');
+ console.log('PASS: WebGL + orbit + first-person + TV + 3D scenes + cinematic reveal + focus detail + map + blackout');
 }
 run().catch(e=>{console.error(e);fs.writeFileSync(path.join(out,'failure.txt'),String(e.stack||e)+'\n'+errors.join('\n'));process.exitCode=1;}).finally(async()=>{if(directorPage&&process.exitCode){await directorPage.screenshot({path:path.join(out,'failure-director.png')}).catch(()=>{});}if(browser)await browser.close();if(server)server.kill();});
