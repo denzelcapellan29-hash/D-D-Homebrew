@@ -87,46 +87,65 @@ function water(g,x,z,r,color){
  const light=new THREE.PointLight(color,10,7,2);light.position.set(x,1.15,z);g.add(light);return light;
 }
 function makeTrials(g){
- const w=23,d=13.6;floor(g,w,d);masonry(g,w,d,2.65);
- const pulse=[];for(const [x,z,c] of [[-6.25,-2.7,0x208dea],[6.25,-2.7,0x28b88e],[-6.25,2.7,0xbcdde0],[6.25,2.7,0xaaa5c4]]) pulse.push(water(g,x,z,1.5,c));
- for(const x of [-1.75,1.75])for(const z of [-2.55,0,2.55]){
-  cyl(g,.46,.54,1.84,x,.92,z,M(0x5c5c54),12);cyl(g,.58,.56,.16,x,1.92,z,M(0x908671),12);
-  for(let a=0;a<4;a++){const ang=a*Math.PI/2;box(g,.12,1.18,.08,x+Math.sin(ang)*.48,.93,z+Math.cos(ang)*.48,M(0x78766d));}
+ const w=29,d=17.5;floor(g,w,d);masonry(g,w,d,3.35);
+ const pulse=[];
+ // Four ritual basins are spaced farther apart and slightly larger so the
+ // chamber reads as a major trial hall rather than a compact puzzle box.
+ for(const [x,z,col] of [[-8.1,-4.1,0x208dea],[8.1,-4.1,0x28b88e],[-8.1,4.1,0xbcdde0],[8.1,4.1,0xaaa5c4]]){
+  pulse.push(water(g,x,z,1.78,col));
  }
- // Tall paired stone doors at the east end, with a narrow seam and carved hardware.
- for(const z of [-.8,.8]){const door=box(g,.20,2.4,1.56,w/2-.2,1.2,z,M(0x918a7a));box(g,.23,.17,.26,w/2-.34,1.17,z+(z<0?.28:-.28),BRASS);}
- for(const z of [-5.6,5.6])torch(g,-10.6,z,0xffa95d);
- for(const z of [-5.6,5.6])torch(g,10.7,z,0xffb460);
- debris(g,w-4,d-2,14,19);
- return {camera:new V(-.8,10.2,15.2),target:new V(0,.62,0),pulse};
+ // Six monolithic pillars: taller, heavier and carved with brass collars.
+ for(const x of [-2.35,2.35])for(const z of [-3.6,0,3.6]){
+  cyl(g,.62,.74,2.72,x,1.36,z,M(0x56574f),12);
+  cyl(g,.78,.73,.20,x,2.80,z,M(0x93866d,.7,{metalness:.08}),12);
+  cyl(g,.75,.81,.20,x,.18,z,M(0x484942),12);
+  for(let a=0;a<4;a++){const ang=a*Math.PI/2;
+   box(g,.13,1.7,.10,x+Math.sin(ang)*.62,1.35,z+Math.cos(ang)*.62,M(0x74736a));
+  }
+ }
+ // Raised threshold and tall paired stone doors at the east end.
+ box(g,.95,.22,4.0,w/2-.72,.11,0,M(0x57564f));
+ for(const z of [-1.08,1.08]){
+  box(g,.26,3.15,2.05,w/2-.28,1.58,z,M(0x8c8577));
+  box(g,.29,.19,.31,w/2-.46,1.42,z+(z<0?.37:-.37),BRASS);
+ }
+ // Side buttresses and ritual braziers add architectural scale cues.
+ for(const side of [-1,1])for(const z of [-6.6,0,6.6]){
+  box(g,.72,2.45,.95,side*(w/2-.48),1.22,z,M(0x4d4e48));
+ }
+ for(const [x,z] of [[-12.4,-7.0],[-12.4,7.0],[12.4,-7.0],[12.4,7.0]])torch(g,x,z,0xffac61);
+ debris(g,w-5,d-3,18,19);
+ return {camera:new V(-1.5,10.8,20.8),target:new V(0,.82,.2),pulse};
 }
 function pressure(g,x,w,d,m){const plate=box(g,w,.045,d,x,.064,0,m);plate.castShadow=false;
  for(const a of [-1,1])for(const b of [-1,1])sphere(g,.047,x+a*(w/2-.13),.09,b*(d/2-.13),BRASS);
  return plate;
 }
 function makeTraps(g){
- const w=25,d=9.8;floor(g,w,d);debris(g,w,d,24,219);
- // Corridor is channelled by old masonry rather than a floating platform.
- for(const side of [-1,1])for(let i=0;i<35;i++){
-  const x=-w/2+(i+.5)*w/35;
-  box(g,w/35-.035,1.62,.43,x,.84,side*d/2,M(i%5?0x514f47:0x6b675c));
+ const w=31,d=11.6;floor(g,w,d);debris(g,w,d,30,219);
+ // A longer, taller corridor so the sequence reads as a dangerous traversal,
+ // not four plates sitting in a small room.
+ for(const side of [-1,1])for(let i=0;i<40;i++){
+  const x=-w/2+(i+.5)*w/40;
+  box(g,w/40-.035,2.12,.52,x,1.06,side*d/2,M(i%5?0x4e4d47:0x68645b));
  }
- // Traps A-D are real physical plates, deliberately unlabelled in player view.
  const bronze=M(0x625a4d,.7,{metalness:.15});
- pressure(g,-5.3,1.7,7.1,M(0x755b50,.82,{metalness:.2}));
- // Heat-scorched patch on the first pressure plate.
- for(let i=0;i<9;i++){const p=sphere(g,.12,-5.3+(rand(i+52)-.5)*1.1,.078,(rand(i+93)-.5)*6.3,M(0x221c1a));p.scale.y=.13;}
- pressure(g,-1.6,1.8,2.2,M(0x625e55));
- const trapB=box(g,1.25,.018,1.65,-1.6,.101,0,M(0x252829));trapB.castShadow=false;
- for(let i=0;i<7;i++)box(g,1.28,.028,.035,-1.6,.12,-.7+i*.23,bronze);
- pressure(g,2.0,1.9,4.3,M(0x695c54));
- // Spectral snare: no GM C label or magical rune diagram visible by default.
- for(let j=0;j<3;j++)sphere(g,.11,2+(rand(j+12)-.5)*.9,.32+j*.14,(rand(j+36)-.5)*2,M(0x858d8a,.65,{transparent:true,opacity:.27}));
- pressure(g,5.8,1.95,7.0,M(0x514c44));
- // Double door corresponding to the locked passage.
- for(const z of [-.76,.76]){box(g,.16,2.4,1.5,9.8,1.2,z,M(0x81786d));box(g,.18,.13,.16,9.65,1.1,z+Math.sign(z)*-.18,BRASS);}
- torch(g,-9.5,-4.35);torch(g,8.45,4.35,0xffc379);
- return {camera:new V(-.5,9.4,15.0),target:new V(.5,.34,0),pulse:[]};
+ pressure(g,-7.2,2.0,8.4,M(0x755b50,.82,{metalness:.2}));
+ for(let i=0;i<11;i++){const p=sphere(g,.13,-7.2+(rand(i+52)-.5)*1.35,.078,(rand(i+93)-.5)*7.2,M(0x211a18));p.scale.y=.12;}
+ pressure(g,-2.5,2.05,2.55,M(0x625e55));
+ const trapB=box(g,1.48,.018,1.92,-2.5,.101,0,M(0x252829));trapB.castShadow=false;
+ for(let i=0;i<8;i++)box(g,1.5,.028,.035,-2.5,.12,-.84+i*.24,bronze);
+ pressure(g,2.7,2.15,4.95,M(0x695c54));
+ for(let j=0;j<4;j++)sphere(g,.12,2.7+(rand(j+12)-.5)*1.0,.32+j*.13,(rand(j+36)-.5)*2.3,M(0x858d8a,.65,{transparent:true,opacity:.23}));
+ pressure(g,8.0,2.25,8.5,M(0x514c44));
+ // Deep doorway alcove gives the far end a destination.
+ box(g,.70,2.9,4.35,12.6,1.45,0,M(0x3d3d39));
+ for(const z of [-.94,.94]){
+  box(g,.18,2.72,1.82,13.02,1.36,z,M(0x81786d));
+  box(g,.20,.15,.18,12.86,1.24,z+Math.sign(z)*-.22,BRASS);
+ }
+ torch(g,-12.8,-5.0);torch(g,11.0,5.0,0xffc379);
+ return {camera:new V(-2.0,8.2,20.3),target:new V(.8,.38,0),pulse:[]};
 }
 function cocoon(g,x,z,size=1){
  const silk=M(0xcecab9,.98);const mat=M(0xeae5d9,.9,{transparent:true,opacity:.4});
@@ -170,22 +189,50 @@ function makeDeath(g){
  const pulse=[torch(g,-8.6,-5.2,0xffb767),torch(g,7.1,-5.5,0x86b9cd)];
  return {camera:new V(-.8,9.5,15.6),target:new V(.2,.7,0),pulse};
 }
-function makeGoblin(g){const w=20,d=14;cave(g,w,d,120);
- for(let i=0;i<21;i++){const x=(rand(i+102)-.5)*w*.75,z=(rand(i+122)-.5)*d*.78;
-  const h=.7+rand(i+23)*2;const o=mesh(g,new THREE.ConeGeometry(.23+rand(i+54)*.37,h,6),STONE,x,h/2,z);o.rotation.z=(rand(i+78)-.5)*.18;
+function makeGoblin(g){
+ const w=22,d=15;cave(g,w,d,120);
+ // Keep only a few natural stalagmites, arranged as framing rather than a
+ // forest of identical cones that competes with the character.
+ for(const [x,z,h,r] of [[-7,-3,1.5,.42],[-6,3.8,2.2,.55],[5.8,-4.2,1.8,.48],[7,3.2,2.6,.62],[-1.2,-5.3,1.2,.36]]){
+  const o=mesh(g,new THREE.ConeGeometry(r,h,8),M(0x5c5a51),x,h/2,z);o.rotation.z=(x+z)*.015;
  }
- // One nervous goblin holding a wooden stick (not a magical staff).
- const skin=M(0x7c8551),cloak=M(0x574c32),eyes=M(0xf6df9b,.4,{emissive:0xc4a85d,emissiveIntensity:.25});
- const torso=sphere(g,.49,-2.5,.87,1.4,cloak,2);torso.scale.set(.78,1.2,.62);
- const head=sphere(g,.39,-2.5,1.70,1.43,skin,2);head.scale.set(1.05,.78,.87);
+ const skin=M(0x71834b,.86),skinDark=M(0x52603a,.9),cloak=M(0x4c3d28,.95),leather=M(0x6b4b2f,.9);
+ const eye=M(0xf4d98b,.35,{emissive:0xa48131,emissiveIntensity:.3}),tooth=M(0xd8d2b8),iron=M(0x373b39,.55,{metalness:.32});
+ const x=-1.8,z=.35;
+ // Bent legs and oversized feet give the silhouette a goblin stance.
  for(const side of [-1,1]){
-  const ear=sphere(g,.22,-2.5+side*.43,1.66,1.40,skin,1);ear.scale.set(1.2,.36,.7);
-  sphere(g,.07,-2.5+side*.17,1.73,1.73,eyes,2);
-  segment(g,[-2.5+side*.2,.6,1.4],[-2.5+side*.28,.08,1.5],.11,skin);
+  segment(g,[x+side*.23,.72,z],[x+side*.31,.35,z+.09],.13,skinDark,9);
+  segment(g,[x+side*.31,.35,z+.09],[x+side*.43,.12,z+.23],.11,skinDark,9);
+  const foot=sphere(g,.18,x+side*.45,.11,z+.34,skinDark,2);foot.scale.set(1.25,.45,1.75);
  }
- segment(g,[-2.14,1.22,1.44],[-1.97,.44,1.5],.10,skin);
- segment(g,[-1.95,.18,1.52],[-1.79,2.45,1.63],.052,WOOD);
- const pulse=[torch(g,4.5,-3.5)];return {camera:new V(1.0,7.3,16),target:new V(-2,.95,0),pulse};}
+ const torso=sphere(g,.48,x,1.05,z,cloak,2);torso.scale.set(.84,1.15,.67);
+ // Belt, pouch and ragged shoulder cloth.
+ ring(g,.38,.055,x,.92,z,leather);
+ box(g,.24,.30,.14,x+.38,.82,z+.05,leather);
+ const shoulder=box(g,.92,.10,.48,x,1.34,z-.02,M(0x59492f));shoulder.rotation.z=.04;
+ // Long-necked head with brows, ears, nose and visible mouth.
+ const neck=cyl(g,.17,.20,.34,x,1.49,z,skinDark,10);
+ const head=sphere(g,.43,x,1.79,z+.02,skin,2);head.scale.set(1.02,.82,.87);
+ for(const side of [-1,1]){
+  const ear=sphere(g,.25,x+side*.48,1.82,z-.02,skin,1);ear.scale.set(1.55,.34,.76);ear.rotation.z=side*.22;
+  sphere(g,.065,x+side*.17,1.84,z+.34,eye,2);
+  const brow=box(g,.22,.045,.055,x+side*.16,1.94,z+.31,skinDark);brow.rotation.z=side*.16;
+ }
+ const nose=sphere(g,.12,x,1.70,z+.42,skinDark,1);nose.scale.set(.72,.72,1.18);
+ box(g,.33,.045,.05,x,1.58,z+.43,M(0x241d17));
+ for(const tx of [-.10,.10])sphere(g,.045,x+tx,1.55,z+.46,tooth,1);
+ // One hand clutches a very ordinary crooked stick; the other gestures nervously.
+ segment(g,[x+.37,1.28,z],[x+.66,.82,z+.10],.105,skin,9);
+ segment(g,[x+.66,.82,z+.10],[x+.75,.45,z+.13],.09,skin,9);
+ segment(g,[x+.73,.38,z+.14],[x+.93,2.68,z+.16],.055,WOOD,8);
+ segment(g,[x-.36,1.28,z],[x-.70,1.13,z+.20],.10,skin,9);
+ segment(g,[x-.70,1.13,z+.20],[x-.90,1.45,z+.34],.085,skin,9);
+ for(let j=0;j<3;j++)segment(g,[x-.90,1.45,z+.34],[x-.98-j*.05,1.58+j*.03,z+.43],.025,skin,6);
+ // Tiny iron knife at the belt: comic menace, not boss-monster language.
+ segment(g,[x-.25,.92,z+.31],[x-.32,.55,z+.48],.035,iron,6);
+ const pulse=[torch(g,5.2,-3.8),torch(g,-7.0,4.5,0xff9b55)];
+ return {camera:new V(1.6,5.9,14.0),target:new V(x,1.22,z),pulse};
+}
 function makeStomp(g){const w=23,d=14;cave(g,w,d,210);
  const foot=M(0x735c47),nail=M(0x9f8b73);
  for(let i=0;i<74;i++){
@@ -221,48 +268,87 @@ function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
  }
  const pulse=[torch(g,-9,4),torch(g,9,4,0xa2f2b7)];return {camera:new V(-.5,8.7,17),target:new V(0,1.55,0),pulse};}
 function makeDragon(g){
- const w=23,d=14;cave(g,w,d,313);
- // Dabshabah is a wounded, young BRASS dragon: a possible ally, not a boss
- // indicator. Rounded anatomical parts read as a small resting wyrm.
- const gold=M(0xb18b43,.52,{metalness:.25}),amber=M(0xd8b56d,.55,{metalness:.17});
- const wing=M(0x65513a,.88,{side:THREE.DoubleSide}),horn=M(0x907447);
- const eye=M(0xe9ac43,.22,{emissive:0x8a4e13,emissiveIntensity:.55});
- const body=sphere(g,1.12,0,1.28,-.30,gold,2);body.scale.set(1.35,.86,1.65);
- const chest=sphere(g,.89,0,1.36,.56,amber,2);chest.scale.set(.95,.87,1.13);
- const neck=sphere(g,.73,0,1.61,1.36,gold,2);neck.scale.set(.83,1.05,1.08);
- const head=sphere(g,.64,0,1.69,2.07,gold,2);head.scale.set(1.16,.74,1.14);
- const snout=sphere(g,.50,0,1.49,2.60,amber,2);snout.scale.set(1.09,.55,1.34);
+ const w=26,d=16;cave(g,w,d,313);
+ // Dabshabah: a wounded young BRASS dragon. The silhouette must read as a
+ // dragon first: long neck, wedge head, articulated limbs, broad folded wings.
+ const scale=M(0xb38a43,.50,{metalness:.28}),belly=M(0xd4b36e,.58,{metalness:.14});
+ const darkScale=M(0x795c32,.64,{metalness:.18}),membrane=M(0x5a4939,.90,{side:THREE.DoubleSide});
+ const horn=M(0x9f8458,.72),eye=M(0xf2b84a,.2,{emissive:0xa25d16,emissiveIntensity:.72});
+ const wound=M(0x72402f,.94);
+ const cx=.35,cz=-.65;
+ // Body and haunches form a grounded S-curve instead of a round toy torso.
+ const body=sphere(g,1.18,cx,1.12,cz,scale,2);body.scale.set(1.65,.82,2.05);
+ const chest=sphere(g,.92,cx,1.28,cz+1.18,belly,2);chest.scale.set(1.04,.96,1.28);
  for(const side of [-1,1]){
-  const jaw=sphere(g,.21,side*.35,1.38,2.52,gold,2);jaw.scale.set(.88,.55,1.37);
-  sphere(g,.087,side*.43,1.85,2.40,eye,2);
-  sphere(g,.05,side*.26,1.63,3.08,M(0x382e21),2);
-  segment(g,[side*.40,1.98,1.80],[side*.66,2.62,1.21],.14,horn,12);
-  segment(g,[side*.70,.94,.60],[side*1.10,.43,1.23],.19,gold,12);
-  segment(g,[side*1.10,.43,1.23],[side*1.24,.16,1.54],.15,gold,12);
-  for(let j=0;j<3;j++)segment(g,[side*(1.15+j*.09),.22,1.50+j*.07],[side*(1.22+j*.13),.12,1.76+j*.08],.047,horn,8);
-  // Swept-back folded leathery wing with supporting finger bones.
-  const verts=[side*.56,1.72,-.58, side*3.8,3.18,-2.32, side*3.22,.47,-2.9,
-    side*.56,1.72,-.58, side*3.22,.47,-2.9, side*1.85,1.18,-.25];
+  const haunch=sphere(g,.78,cx+side*.78,.80,cz-.85,darkScale,2);haunch.scale.set(1.05,.85,1.18);
+ }
+ // Rising neck built from tapered articulated segments.
+ const neckPts=[
+  [cx,1.38,cz+1.35],[cx-.05,1.72,cz+1.95],[cx+.08,2.05,cz+2.52],[cx+.18,2.32,cz+3.05]
+ ];
+ for(let i=0;i<neckPts.length-1;i++)segment(g,neckPts[i],neckPts[i+1],.44-i*.055,scale,12);
+ // Wedge-shaped head and jaw.
+ const head=sphere(g,.64,cx+.20,2.38,cz+3.48,scale,2);head.scale.set(1.08,.66,1.32);
+ const muzzle=sphere(g,.46,cx+.20,2.23,cz+3.98,belly,2);muzzle.scale.set(1.05,.50,1.35);
+ const jaw=box(g,.82,.16,.72,cx+.20,2.08,cz+3.72,darkScale);jaw.rotation.x=-.07;
+ for(const side of [-1,1]){
+  sphere(g,.085,cx+.20+side*.30,2.49,cz+3.78,eye,2);
+  sphere(g,.055,cx+.20+side*.19,2.30,cz+4.36,M(0x2d261d),2);
+  // swept horns and cheek spines
+  segment(g,[cx+.20+side*.34,2.63,cz+3.17],[cx+.20+side*.63,3.08,cz+2.55],.11,horn,9);
+  for(let j=0;j<3;j++)segment(g,[cx+.20+side*(.38+j*.05),2.28-j*.05,cz+3.12-j*.12],[cx+.20+side*(.72+j*.10),2.16-j*.06,cz+2.78-j*.15],.055,horn,7);
+ }
+ // Four articulated legs with elbows/knees and clawed feet.
+ for(const side of [-1,1]){
+  // forelegs
+  segment(g,[cx+side*.72,1.28,cz+1.16],[cx+side*.98,.66,cz+1.58],.18,scale,10);
+  segment(g,[cx+side*.98,.66,cz+1.58],[cx+side*1.12,.18,cz+1.93],.13,scale,10);
+  const ff=sphere(g,.20,cx+side*1.12,.15,cz+2.02,darkScale,2);ff.scale.set(1.25,.42,1.55);
+  // rear legs
+  segment(g,[cx+side*.92,.92,cz-.78],[cx+side*1.35,.48,cz-.30],.24,darkScale,10);
+  segment(g,[cx+side*1.35,.48,cz-.30],[cx+side*1.55,.16,cz+.12],.16,scale,10);
+  const rf=sphere(g,.24,cx+side*1.56,.14,cz+.24,darkScale,2);rf.scale.set(1.25,.42,1.62);
+  for(let j=0;j<3;j++){
+   segment(g,[cx+side*(1.08+j*.08),.17,cz+2.08+j*.03],[cx+side*(1.10+j*.12),.10,cz+2.28+j*.05],.032,horn,6);
+   segment(g,[cx+side*(1.52+j*.08),.15,cz+.30+j*.03],[cx+side*(1.56+j*.12),.09,cz+.52+j*.05],.035,horn,6);
+  }
+ }
+ // Folded wings rise from the shoulders and sweep backward. Multiple panels,
+ // finger bones and scalloped trailing edges create a readable dragon wing.
+ for(const side of [-1,1]){
+  const root=[cx+side*.68,1.72,cz-.18];
+  const elbow=[cx+side*2.2,3.05,cz-1.0];
+  const tip=[cx+side*4.6,2.55,cz-3.25];
+  const rear=[cx+side*2.35,.82,cz-3.55];
+  segment(g,root,elbow,.12,horn,9);segment(g,elbow,tip,.08,horn,8);segment(g,root,rear,.07,horn,8);
+  const verts=[
+    ...root,...elbow,...tip,
+    ...root,...tip,...rear,
+    ...root,...rear,cx+side*1.30,1.05,cz-.55
+  ];
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.computeVertexNormals();
-  mesh(g,geo,wing);
-  segment(g,[side*.56,1.75,-.55],[side*3.8,3.18,-2.32],.09,horn,8);
-  segment(g,[side*.56,1.75,-.55],[side*3.22,.48,-2.9],.055,horn,8);
+  mesh(g,geo,membrane);
  }
- // Tail curls back across the cavern floor, with a few dorsal spines.
- const path=new THREE.CatmullRomCurve3([new V(0,1.1,-1.7),new V(.7,.77,-2.7),new V(1.8,.57,-3.4),new V(2.4,.55,-2.8)]);
- mesh(g,new THREE.TubeGeometry(path,26,.23,10,false),gold);
- for(let i=0;i<6;i++){
-  const p=path.getPoint((i+.5)/8);mesh(g,new THREE.ConeGeometry(.15,.34,5),horn,p.x,p.y+.26,p.z);
+ // Long tapering tail curls away from the camera.
+ const tailPath=new THREE.CatmullRomCurve3([
+  new V(cx,1.0,cz-1.8),new V(cx-.45,.70,cz-3.0),new V(cx-1.65,.50,cz-4.1),new V(cx-3.2,.42,cz-3.7),new V(cx-4.25,.34,cz-2.8)
+ ]);
+ mesh(g,new THREE.TubeGeometry(tailPath,44,.28,10,false),scale);
+ for(let i=0;i<7;i++){const p=tailPath.getPoint((i+.4)/8);const s=mesh(g,new THREE.ConeGeometry(.13,.38,5),horn,p.x,p.y+.29,p.z);s.rotation.z=.12;}
+ // Wound on left shoulder, subdued but visible.
+ const bruise=sphere(g,.34,cx-.92,1.58,cz+.62,wound,2);bruise.scale.set(1.45,.16,.72);
+ // Two darkmantles remain secondary silhouettes overhead.
+ for(const x of [-4.4,4.8]){
+  sphere(g,.45,x,4.15,-3.2,DARK,2);
+  for(let i=0;i<4;i++)segment(g,[x,4.0,-3.2],[x+(i-1.5)*.52,2.95,-2.45],.06,DARK);
  }
- // A wound near the shoulder: texture cue rather than gratuitous gore.
- const bruise=sphere(g,.29,-.86,1.68,.16,M(0x744b31,.95),2);bruise.scale.set(1.32,.17,.68);
- // Two darkmantles hang above the recovering dragon, partly silhouetted.
- for(const x of [-3.8,4.1]){
-  sphere(g,.43,x,3.35,-2.9,DARK,2);
-  for(let i=0;i<4;i++)segment(g,[x,3.2,-2.9],[x+(i-1.5)*.52,2.1,-2.2],.065,DARK);
+ // Small brass reflections / treasure scraps support color without turning it into a hoard.
+ for(let i=0;i<13;i++){
+  const x=(rand(i+440)-.5)*10,z=(rand(i+460)-.5)*6-1.4;
+  const coin=sphere(g,.055,x,.07,z,BRASS,1);coin.scale.set(1.5,.25,1.0);
  }
- const pulse=[torch(g,-8,-5,0xff9f4d),torch(g,8,-4,0xffc873)];
- return {camera:new V(1.3,7.6,15.3),target:new V(0,1.5,.6),pulse};
+ const pulse=[torch(g,-9.5,-5.6,0xff9f4d),torch(g,9.5,-4.8,0xffc873)];
+ return {camera:new V(-1.0,6.4,17.2),target:new V(cx,1.45,cz+1.55),pulse};
 }
 function makeShrine(g){const w=23,d=14;floor(g,w,d);masonry(g,w,d,3.9);
  const altar=box(g,5.1,1.2,3.3,0,.6,-1.4,M(0x69685e));
