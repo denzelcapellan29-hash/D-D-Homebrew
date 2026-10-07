@@ -256,9 +256,9 @@ export function buildConnection(world,c) {
     plank.rotation.y=.45+i*.87;
   }
   const foundationMat=new THREE.MeshStandardMaterial({color:0x454842,roughness:1});
-  for(const side of [-1,1])box(upper,'Warehouse stone foundation side',c.x+side*(c.halfW+.18),c.depth-.55,c.z,.42,1.05,c.halfH*2+.8,foundationMat);
-  box(upper,'Warehouse stone foundation front',c.x,c.depth-.55,c.z+c.halfH+.18,c.halfW*2+.8,1.05,.42,foundationMat);
-  box(upper,'Warehouse stone foundation rear',c.x,c.depth-.55,c.z-c.halfH-.18,c.halfW*2+.8,1.05,.42,foundationMat);
+  for(const side of [-1,1])box(upper,'Warehouse stone foundation side',c.x+side*(c.halfW+.12),c.depth-.27,c.z,.28,.46,c.halfH*2+.55,foundationMat);
+  box(upper,'Warehouse stone foundation front',c.x,c.depth-.27,c.z+c.halfH+.12,c.halfW*2+.55,.46,.28,foundationMat);
+  box(upper,'Warehouse stone foundation rear',c.x,c.depth-.27,c.z-c.halfH-.12,c.halfW*2+.55,.46,.28,foundationMat);
 
   // Waterdeep context: continuous cobbles and distant roofline masses. Keep
   // the context below the warehouse silhouette so it supports the shot instead
@@ -268,9 +268,9 @@ export function buildConnection(world,c) {
   streetShape.moveTo(-sw,-sd);streetShape.lineTo(sw,-sd);streetShape.lineTo(sw,sd);streetShape.lineTo(-sw,sd);streetShape.closePath();
   const warehouseVoid=new THREE.Path();
   const wx=c.halfW+.42,wz=c.halfH+.42,streetOffsetZ=3.9;
-  // Shape holes use the street mesh's local coordinates; the warehouse is
-  // streetOffsetZ units behind that local origin.
-  const localWarehouseZ=-streetOffsetZ;
+  // ShapeGeometry is later rotated -90deg around X, so local +Y maps to world -Z.
+  // The warehouse is streetOffsetZ behind the street mesh origin.
+  const localWarehouseZ=streetOffsetZ;
   warehouseVoid.moveTo(-wx,localWarehouseZ-wz);warehouseVoid.lineTo(-wx,localWarehouseZ+wz);
   warehouseVoid.lineTo(wx,localWarehouseZ+wz);warehouseVoid.lineTo(wx,localWarehouseZ-wz);warehouseVoid.closePath();
   streetShape.holes.push(warehouseVoid);
