@@ -240,6 +240,23 @@ export function buildConnection(world,c) {
     box(upper,'Standing timber post',c.x+side*3.8,c.depth+1.9,c.z-2.8,.23,3.8,.23,darkWood);
   }
   box(upper,'Warehouse back wall',c.x,c.depth+.88,c.z-c.halfH,c.halfW*2,1.76,.26,wallStone);
+  // Exposed half-timber framing gives the surviving masonry believable
+  // warehouse structure and breaks up the flat cutaway-wall read.
+  for(const side of [-1,1]){
+    const wallX=c.x+side*(c.halfW-.15);
+    box(upper,'Warehouse side timber rail',wallX,c.depth+1.18,c.z,.13,.13,c.halfH*2-.7,darkWood);
+    for(const zOff of [-2.25,0,2.25]){
+      box(upper,'Warehouse side timber stud',wallX,c.depth+.92,c.z+zOff,.15,1.72,.16,darkWood);
+    }
+  }
+  for(const xOff of [-3.15,0,3.15]){
+    box(upper,'Warehouse back timber stud',c.x+xOff,c.depth+.94,c.z-c.halfH+.15,.15,1.70,.15,darkWood);
+  }
+  box(upper,'Warehouse back timber rail',c.x,c.depth+1.26,c.z-c.halfH+.15,c.halfW*2-.55,.14,.16,darkWood);
+  for(const side of [-1,1]){
+    const brace=box(upper,'Warehouse back diagonal brace',c.x+side*1.65,c.depth+.92,c.z-c.halfH+.16,2.55,.13,.14,darkWood);
+    brace.rotation.z=side*.46;
+  }
   // Broken front-corner returns frame the ruin from the hero camera. The
   // center stays open as the damaged entrance, but the building no longer
   // reads as a roof perched over a three-sided stage.
