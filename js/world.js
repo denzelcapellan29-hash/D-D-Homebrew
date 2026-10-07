@@ -332,8 +332,8 @@ export class TabletopWorld {
     const earth=stoneMaterial(this.surfaces,{color:0x4a4137,roughness:1});
     const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
     const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
-    const ceilingMat=stoneMaterial(this.surfaces,{color:0x3b3a34,roughness:1});
-    ceilingMat.side=THREE.DoubleSide;
+    const ceilingMat=stoneMaterial(this.surfaces,{color:0x454239,roughness:1});
+    ceilingMat.side=THREE.DoubleSide;ceilingMat.emissive=new THREE.Color(0x10100e);ceilingMat.emissiveIntensity=.42;
 
     const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
     bed.rotation.x=-Math.PI/2;bed.position.y=-.10;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
@@ -350,7 +350,7 @@ export class TabletopWorld {
     const sidePoints=(side,outset=0)=>profile.map(([v,l,r],i)=>{
       const u=(side<0?l:r)+(side<0?-outset:outset);
       const p=this.mapToWorld(u,v);
-      return {x:p.x,z:p.z,h:2.25+.38*Math.sin(i*.92)+.22*Math.cos(i*.47)};
+      return {x:p.x,z:p.z,h:1.85+.28*Math.sin(i*.92)+.17*Math.cos(i*.47)};
     });
 
     const makeWall=(side)=>{
@@ -371,20 +371,6 @@ export class TabletopWorld {
       geo.computeVertexNormals();
       const wall=new THREE.Mesh(geo,wallMat);wall.name='Continuous cave wall';wall.castShadow=true;wall.receiveShadow=true;shell.add(wall);
 
-      // Sloped shoulder outside the walkable corridor hides the top edge and
-      // makes the wall read as part of a larger rock mass.
-      const out=sidePoints(side,.12),shoulderVerts=[];
-      for(let i=0;i<pts.length-1;i++){
-        const a=pts[i],b=pts[i+1],ao=out[i],bo=out[i+1];
-        const yA=a.h,yB=b.h;
-        const quad=[
-          [a.x,yA,a.z],[b.x,yB,b.z],
-          [bo.x,yB+.85,bo.z],[ao.x,yA+.85,ao.z]
-        ];
-        for(const idx of [0,1,2,0,2,3])shoulderVerts.push(...quad[idx]);
-      }
-      const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(shoulderVerts,3));sg.computeVertexNormals();
-      const sm=new THREE.Mesh(sg,shoulderMat);sm.name='Cave wall shoulder';sm.castShadow=true;sm.receiveShadow=true;shell.add(sm);
     };
     makeWall(-1);makeWall(1);
 
@@ -395,8 +381,8 @@ export class TabletopWorld {
     tunnel.rotation.x=-Math.PI/2;tunnel.position.set(north.x,-.078,north.z-5.0);tunnel.receiveShadow=true;tunnel.name='North tunnel continuation';shell.add(tunnel);
     for(const side of [-1,1]){
       const x=north.x+side*1.45;
-      const long=new THREE.Mesh(new THREE.BoxGeometry(.85,2.4,10.5),shoulderMat);
-      long.position.set(x,1.15,north.z-5.0);long.rotation.z=side*.045;long.name='Deep tunnel wall';long.castShadow=true;long.receiveShadow=true;shell.add(long);
+      const long=new THREE.Mesh(new THREE.BoxGeometry(.72,1.75,10.5),shoulderMat);
+      long.position.set(x,.82,north.z-5.0);long.rotation.z=side*.055;long.name='Deep tunnel wall';long.castShadow=true;long.receiveShadow=true;shell.add(long);
     }
 
     // First-person ceiling. It is hidden in Orbit so tactical readability stays
@@ -409,7 +395,7 @@ export class TabletopWorld {
     }
     pos.needsUpdate=true;ceilingGeo.computeVertexNormals();
     const ceiling=new THREE.Mesh(ceilingGeo,ceilingMat);
-    ceiling.rotation.x=Math.PI/2;ceiling.position.y=3.65;ceiling.name='Area 1 cave ceiling';
+    ceiling.rotation.x=Math.PI/2;ceiling.position.y=2.95;ceiling.name='Area 1 cave ceiling';
     ceiling.receiveShadow=true;ceiling.visible=false;shell.add(ceiling);this.caveCeiling=ceiling;
 
     // Motivated cave lighting: warm spill near the rope landing and a very dim
