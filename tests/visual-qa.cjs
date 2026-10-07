@@ -6,6 +6,7 @@ const {spawn}=require('node:child_process');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
 const out=path.join(root,'qa-artifacts');
+fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 const port=8734;
 let server, browser, directorPage;
@@ -32,6 +33,7 @@ async function run(){
  assert.equal(await dm.locator('#walkMode').getAttribute('aria-pressed'),'true','Explore mode not selected');
  await shot(dm,'01c-warehouse-first-person');
  await dm.locator('#orbitMode').click();await dm.locator('#viewArea1').click();await nap(650);
+ await shot(dm,'02a-area1-orbit');
  await dm.locator('#walkMode').click();await nap(900);await shot(dm,'02-director-first-person');
  await dm.locator('#orbitMode').click();await nap(500);
  const tv=await context.newPage();observe(tv,'tv');
