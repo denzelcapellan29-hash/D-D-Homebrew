@@ -38,3 +38,8 @@
 ## Visual-QA log
 
 First successful automated rendering pass (v0.6): Orbit and camera modes initialized, but independent screenshot inspection revealed defects: Explore camera obscured by an enormous bright rock face; Area 2 / 3 drawings had **labels printed on the floor**; A–D markings were openly visible to players; Area 5 looked like coarse boulders. This source-fidelity pass introduces 3D stone floor materials and cinematic reconstructions while keeping 2D image fallback.
+## Project instruction authority
+
+The root-level **PROJECT_INSTRUCTIONS.md** is the standing operating standard for MapForge development. In particular, visual changes are not accepted until the actual rendered QA frames have been retrieved and manually inspected. Workflow completion, WebGL startup, and screenshot existence are necessary but not sufficient.
+
+The 2026-10-07 Warehouse / Area 1 failure is now a permanent QA lesson: do not present a visual pass as ready when first-person framing, environment composition, or world-edge concealment have not been visually checked.
