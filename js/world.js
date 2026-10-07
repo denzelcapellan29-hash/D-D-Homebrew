@@ -148,9 +148,9 @@ export class TabletopWorld {
     this.connectionOptions={enabled:!!connectionOptions.enabled,depthFeet:clamp(Number(connectionOptions.depthFeet)||60,20,150)};
     this.connection=this.connectionOptions.enabled?connectionLayout(this,this.connectionOptions.depthFeet):null;
     if(this.connection){
-      this.scene.background.set('#171d1c');
-      this.scene.fog.color.set('#171d1c');
-      this.scene.fog.near=24;this.scene.fog.far=72;
+      this.scene.background.set('#171c1b');
+      this.scene.fog.color.set('#171c1b');
+      this.scene.fog.near=16;this.scene.fog.far=48;
     }else{
       this.scene.fog.near=38;this.scene.fog.far=100;
     }
@@ -325,74 +325,84 @@ export class TabletopWorld {
     }
   }
   _buildCuratedCave(){
-    // Hand-authored presentation shell for the bundled Area 1 scene. The
-    // previous mask extrusion produced tall saw-tooth walls that read like
-    // unfinished geometry in first-person. Keep collision from the source mask,
-    // but render the boundary as overlapping rounded rock masses over a broad
-    // earth bed so there is no floating map edge.
+    // Bespoke presentation shell for the bundled Area 1 scene. Collision still
+    // comes from the authored mask; visible geometry is built as broad,
+    // overlapping rock ridges so first-person never sees a fence of polygons or
+    // isolated "potato" boulders.
     const shell=new THREE.Group();shell.name='Area 1 cinematic cave shell';
-    const earth=stoneMaterial(this.surfaces,{color:0x4a4339,roughness:1});
-    const rockMat=stoneMaterial(this.surfaces,{color:0x454741,roughness:1});
-    const deep=new THREE.MeshStandardMaterial({color:0x242927,roughness:1});
+    const earth=stoneMaterial(this.surfaces,{color:0x4b443b,roughness:1});
+    const rockMat=stoneMaterial(this.surfaces,{color:0x393c38,roughness:1});
+    const deep=new THREE.MeshStandardMaterial({color:0x202523,roughness:1});
 
-    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+12,this.worldH+14),earth);
-    bed.rotation.x=-Math.PI/2;bed.position.y=-.09;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
+    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+14,this.worldH+18),earth);
+    bed.rotation.x=-Math.PI/2;bed.position.y=-.095;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
 
-    const rockGeo=new THREE.IcosahedronGeometry(.62,2);
-    const addRock=(x,z,sx,sy,sz,seed,material=rockMat)=>{
-      const rock=new THREE.Mesh(rockGeo,material);
-      rock.position.set(x,.34+sy*.28,z);
+    // Organic ridge unit. A moderately smooth sphere is deliberately squashed
+    // and overlapped; the silhouette reads as eroded cave wall instead of
+    // discrete rocks.
+    const ridgeGeo=new THREE.SphereGeometry(1,14,9);
+    for(const attr of ['position']){
+      const p=ridgeGeo.attributes[attr];
+      for(let i=0;i<p.count;i++){
+        const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+        const n=.08*Math.sin(x*7.2+z*5.3+i*.19)+.045*Math.cos(y*9.1-i*.11);
+        p.setXYZ(i,x*(1+n),y*(1+n*.45),z*(1+n));
+      }
+      p.needsUpdate=true;
+    }
+    ridgeGeo.computeVertexNormals();
+
+    const addRidge=(x,z,sx,sy,sz,seed,material=rockMat,y=.45)=>{
+      const rock=new THREE.Mesh(ridgeGeo,material);
+      rock.position.set(x,y,z);
       rock.scale.set(sx,sy,sz);
-      rock.rotation.set((rand(seed,2)-.5)*.32,rand(seed,4)*Math.PI*2,(rand(seed,8)-.5)*.24);
-      rock.castShadow=true;rock.receiveShadow=true;rock.name='Natural cave wall mass';shell.add(rock);
+      rock.rotation.set((rand(seed,2)-.5)*.12,rand(seed,4)*Math.PI*2,(rand(seed,8)-.5)*.09);
+      rock.castShadow=true;rock.receiveShadow=true;rock.name='Continuous cave ridge';shell.add(rock);
+      return rock;
     };
 
     const {width:w,height:h,mask}=this.analysis;
-    let count=0;
-    // Sample only selected non-walkable cells adjacent to walkable floor. The
-    // overlap reads as one eroded wall instead of a picket fence of polygons.
-    for(let y=1;y<h-1;y+=2)for(let x=1;x<w-1;x+=2){
+    // Gather edge cells. Place larger, flatter ridges at a measured cadence so
+    // neighboring units overlap into one wall mass.
+    const edge=[];
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
       const i=y*w+x;if(mask[i])continue;
-      const near=[mask[i-1],mask[i+1],mask[i-w],mask[i+w]].some(Boolean);
-      if(!near||rand(x*11,y*17)>.48)continue;
+      if([mask[i-1],mask[i+1],mask[i-w],mask[i+w]].some(Boolean))edge.push([x,y]);
+    }
+    const stride=Math.max(3,Math.floor(edge.length/30));
+    for(let k=0;k<edge.length;k+=stride){
+      const [x,y]=edge[k];
       const p=this.mapToWorld((x+.5)/w,(y+.5)/h);
       if(this.connection&&inLanding(this.connection,p.x,p.z))continue;
-      const s=.72+rand(x,y)*.62;
-      addRock(p.x,p.z,1.15*s,.95+rand(x,3)*.85,1.05*s,x+y*97);
-      count++;
+      const seed=x+y*101;
+      addRidge(p.x,p.z,1.8+rand(seed,3)*.7,.62+rand(seed,5)*.28,1.5+rand(seed,7)*.65,seed);
     }
 
-    // A second, darker outer ridge closes occasional gaps without creating a
-    // literal rectangular boundary around the playable map.
-    const px=this.worldW/2+1.4,pz=this.worldH/2+1.6;
-    for(let i=0;i<16;i++){
-      const t=(i%4)/3-.5,side=Math.floor(i/4);
-      let x,z;
-      if(side===0){x=t*this.worldW*1.25;z=-pz;}
-      else if(side===1){x=px;z=t*this.worldH*1.2;}
-      else if(side===2){x=t*this.worldW*1.25;z=pz;}
-      else{x=-px;z=t*this.worldH*1.2;}
-      addRock(x,z,1.7+rand(i,2)*.7,1.2+rand(i,4)*.9,1.6+rand(i,6)*.7,700+i,deep);
-    }
+    // Four low, broad outer masses close the world at grazing angles without
+    // becoming giant isolated objects in Orbit or Explore.
+    const px=this.worldW/2+2.2,pz=this.worldH/2+2.8;
+    addRidge(-px,0,3.8,.72,this.worldH*.42,901,deep,.35);
+    addRidge(px,0,3.8,.72,this.worldH*.42,902,deep,.35);
+    addRidge(0,-pz,this.worldW*.42,.72,3.8,903,deep,.35);
+    addRidge(0,pz,this.worldW*.42,.72,3.8,904,deep,.35);
 
-    // Continue the north passage beyond the tactical map into fog and darkness.
+    // Continue the northern passage well past the playable map. The side ridges
+    // converge slightly into fog, giving the eye a real destination.
     const north=this.mapToWorld(.50,.02);
-    const tunnel=new THREE.Mesh(new THREE.PlaneGeometry(2.4,8.5),earth);
-    tunnel.rotation.x=-Math.PI/2;tunnel.position.set(north.x,-.075,north.z-4.0);tunnel.receiveShadow=true;tunnel.name='North tunnel continuation';shell.add(tunnel);
-    for(let i=0;i<8;i++){
-      const z=north.z-1.0-i*.92;
-      addRock(north.x-1.28-(i%2)*.13,z,.95,1.25,.95,760+i);
-      addRock(north.x+1.28+(i%2)*.13,z,.95,1.25,.95,790+i);
+    const tunnel=new THREE.Mesh(new THREE.PlaneGeometry(2.55,10.5),earth);
+    tunnel.rotation.x=-Math.PI/2;tunnel.position.set(north.x,-.078,north.z-4.9);tunnel.receiveShadow=true;tunnel.name='North tunnel continuation';shell.add(tunnel);
+    for(let i=0;i<7;i++){
+      const z=north.z-1.1-i*1.15, taper=i*.035;
+      addRidge(north.x-1.40+taper,z,1.55,.66,1.35,940+i);
+      addRidge(north.x+1.40-taper,z,1.55,.66,1.35,970+i);
     }
 
-    // Sparse ceiling shoulders are visible in Explore but kept away from the
-    // center so the Orbit camera remains unobstructed.
-    for(let i=0;i<8;i++){
-      const x=(i<4?-1:1)*(this.worldW*.42+rand(i,9)*.5);
-      const z=(-.4+(i%4)/3*.8)*this.worldH;
-      const cap=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),deep);
-      cap.position.set(x,3.1+rand(i,12)*.55,z);cap.scale.set(1.9,1.0,2.1);cap.rotation.y=rand(i,13)*6.2;
-      cap.name='Cave ceiling shoulder';shell.add(cap);
+    // A few high side overhangs provide a ceiling cue in first-person but are
+    // kept beyond the center sightline and below the Orbit camera.
+    for(const side of [-1,1])for(let i=0;i<3;i++){
+      const z=(-.28+i*.28)*this.worldH;
+      const cap=addRidge(side*(this.worldW*.48+1.1),z,2.7,.52,2.15,1010+i+(side>0?20:0),deep,2.7);
+      cap.rotation.z=side*.12;
     }
     this.worldRoot.add(shell);
   }
