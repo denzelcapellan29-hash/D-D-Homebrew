@@ -332,7 +332,7 @@ export class TabletopWorld {
     const earth=stoneMaterial(this.surfaces,{color:0x4a4137,roughness:1});
     const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
     const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
-    const ceilingMat=stoneMaterial(this.surfaces,{color:0x292d2a,roughness:1});
+    const ceilingMat=stoneMaterial(this.surfaces,{color:0x3b3a34,roughness:1});
     ceilingMat.side=THREE.DoubleSide;
 
     const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
@@ -411,6 +411,14 @@ export class TabletopWorld {
     const ceiling=new THREE.Mesh(ceilingGeo,ceilingMat);
     ceiling.rotation.x=Math.PI/2;ceiling.position.y=3.65;ceiling.name='Area 1 cave ceiling';
     ceiling.receiveShadow=true;ceiling.visible=false;shell.add(ceiling);this.caveCeiling=ceiling;
+
+    // Motivated cave lighting: warm spill near the rope landing and a very dim
+    // cool bounce deeper north. This keeps the ceiling and wall silhouette visible
+    // without turning the cavern into a uniformly lit game level.
+    const entry=this.connection?.landing||this.mapToWorld(.38,.40);
+    const warm=new THREE.PointLight(0xd09a63,6.5,8.5,2);warm.position.set(entry.x,2.15,entry.z+.25);warm.name='Area 1 landing spill';shell.add(warm);
+    const deepPoint=this.mapToWorld(.54,.08);
+    const cool=new THREE.PointLight(0x607b82,2.2,7.0,2);cool.position.set(deepPoint.x,2.0,deepPoint.z-1.0);cool.name='Area 1 deep cave bounce';shell.add(cool);
 
     // A few small embedded masses soften corners without taking over the shot.
     const lumpGeo=new THREE.IcosahedronGeometry(.42,1);
@@ -508,7 +516,7 @@ export class TabletopWorld {
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
     }else if(this.connection&&level==='warehouse'){
-      const c=this.connection;this.orbit.target.set(c.x,c.depth+.12,c.z+.18);this.camera.position.set(c.x+7.0,c.depth+4.9,c.z+8.5);this.orbit.update();
+      const c=this.connection;this.orbit.target.set(c.x,c.depth+.06,c.z+.22);this.camera.position.set(c.x+6.7,c.depth+3.7,c.z+8.1);this.orbit.update();
     }else this.recenter();
   }
   upperSpawn(){const c=this.connection;return {x:c.x+.62,z:c.z+3.02};}
