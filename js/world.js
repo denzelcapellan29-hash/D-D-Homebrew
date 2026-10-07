@@ -412,14 +412,24 @@ export class TabletopWorld {
     const north=this.mapToWorld(.55,.0);
     const tunnelFloor=new THREE.Mesh(new THREE.PlaneGeometry(2.8,12),earth);
     tunnelFloor.rotation.x=-Math.PI/2;tunnelFloor.position.set(north.x,-.075,north.z-5.5);tunnelFloor.receiveShadow=true;tunnelFloor.name='North tunnel continuation';shell.add(tunnelFloor);
-    const throatGeo=new THREE.IcosahedronGeometry(1,2);
-    for(const side of [-1,1])for(let i=0;i<7;i++){
-      const z=north.z-1.0-i*1.45;
-      const wall=new THREE.Mesh(throatGeo,crownMat);
-      wall.position.set(north.x+side*(1.72-i*.025),.88,z);
-      wall.scale.set(.88,1.12,1.28);wall.rotation.set(.05*Math.sin(i),i*.63,.08*side);
-      wall.castShadow=true;wall.receiveShadow=true;wall.name='Deep tunnel rock mass';shell.add(wall);
-    }
+    const makeThroatWall=(side)=>{
+      const verts=[],uvs=[];
+      const segments=7;
+      for(let i=0;i<segments;i++){
+        const z0=north.z-.45-i*1.55,z1=north.z-.45-(i+1)*1.55;
+        const inner0=north.x+side*(1.48+i*.025),inner1=north.x+side*(1.48+(i+1)*.025);
+        const outer0=north.x+side*(3.20+i*.08),outer1=north.x+side*(3.20+(i+1)*.08);
+        const h0=1.55+.18*Math.sin(i*.8),h1=1.55+.18*Math.sin((i+1)*.8);
+        const q=[
+          [inner0,.02,z0,0,0],[inner1,.02,z1,1,0],[outer1,h1,z1,1,1],
+          [inner0,.02,z0,0,0],[outer1,h1,z1,1,1],[outer0,h0,z0,0,1]
+        ];
+        for(const v of q){verts.push(v[0],v[1],v[2]);uvs.push(v[3],v[4]);}
+      }
+      const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.computeVertexNormals();
+      const wall=new THREE.Mesh(geo,crownMat);wall.name='Continuous deep tunnel wall';wall.castShadow=true;wall.receiveShadow=true;shell.add(wall);
+    };
+    makeThroatWall(-1);makeThroatWall(1);
 
     // First-person ceiling. Hidden in Orbit for tactical readability.
     const ceilingGeo=new THREE.PlaneGeometry(this.worldW+10,this.worldH+16,18,26);
