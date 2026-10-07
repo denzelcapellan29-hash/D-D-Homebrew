@@ -298,11 +298,19 @@ export function buildConnection(world,c) {
   street.position.set(c.x,c.depth-.205,c.z+streetOffsetZ);street.receiveShadow=true;upper.add(street);
   const plaster=new THREE.MeshStandardMaterial({color:0x4d4b47,roughness:1});
   const roofDark=new THREE.MeshStandardMaterial({color:0x342c29,roughness:1});
+  const windowMat=new THREE.MeshStandardMaterial({color:0x9d7948,emissive:0x8a5624,emissiveIntensity:.32,roughness:.72});
   for(let k=0;k<5;k++){
     const x=c.x-7.6+k*3.8,z=c.z-11.7-(k%2)*.35,h=1.8+(k%3)*.35;
-    box(upper,'Distant Waterdeep mass',x,c.depth+h*.5,z,3.2,h,1.0,plaster);
-    const roof=box(upper,'Distant Waterdeep roofline',x,c.depth+h+.22,z,3.6,.16,1.35,roofDark);
-    roof.rotation.z=(k%2?.10:-.10);
+    box(upper,'Distant Waterdeep facade',x,c.depth+h*.5,z,3.2,h,1.0,plaster);
+    // Paired sloped roof planes make the skyline read as a lived-in medieval
+    // district while staying deliberately low-detail in the background.
+    const left=box(upper,'Distant Waterdeep pitched roof',x-.74,c.depth+h+.48,z,1.85,.10,1.45,roofDark);
+    left.rotation.z=-.36;
+    const right=box(upper,'Distant Waterdeep pitched roof',x+.74,c.depth+h+.48,z,1.85,.10,1.45,roofDark);
+    right.rotation.z=.36;
+    if(k%2===0){
+      for(const wx of [-.7,.7])box(upper,'Distant warm window',x+wx,c.depth+h*.56,z+.515,.32,.44,.025,windowMat);
+    }
   }
   // Low side fragments close the street edges without becoming foreground boxes.
   for(const side of [-1,1]){
