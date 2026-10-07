@@ -197,20 +197,13 @@ export function buildConnection(world,c) {
   landing.position.set(c.x,.012,c.z);landing.name='Rough rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
   const entranceFloor=box(root,'Natural west-wall fissure floor',(c.x+c.landing.x)/2,.012,c.z,c.landing.x-c.x+.72,.03,1.02,stone);
   entranceFloor.rotation.y=.02;
-  // Natural rock shoulders replace the old rectangular doorway jambs.
-  // Keep them dark, low and embedded so they read as a torn cave mouth rather
-  // than a cluster of bright spheres.
-  const entranceStone=stoneMaterial(world.surfaces,{color:0x45463f,roughness:1});
-  const jambGeo=new THREE.DodecahedronGeometry(.48,0);
-  for(const side of [-1,1])for(let i=0;i<2;i++){
-    const rock=new THREE.Mesh(jambGeo,entranceStone);
-    rock.position.set((c.x+c.landing.x)/2+(i-.35)*.38,.52+i*.42,c.z+side*(.68+.06*i));
-    rock.scale.set(1.25+.18*i,1.05+.28*i,.72+.06*i);rock.rotation.set(.16*i,.68*i,.10*side);
-    rock.castShadow=true;rock.receiveShadow=true;rock.name='Natural fissure entrance shoulder';root.add(rock);
-  }
-  const lip=new THREE.Mesh(new THREE.DodecahedronGeometry(.58,1),entranceStone);
-  lip.position.set((c.x+c.landing.x)/2+.08,2.42,c.z);lip.scale.set(1.65,.38,1.02);lip.rotation.z=-.07;
-  lip.castShadow=true;lip.receiveShadow=true;lip.name='Natural fissure ceiling lip';root.add(lip);
+  // Player-facing Area 1 cutaway needs a readable west-wall fissure without
+  // adding freestanding "rock props". A dark irregular crevice sits in the wall
+  // and the local rope tail emerges from it.
+  const mouthMat=new THREE.MeshBasicMaterial({color:0x090c0c,transparent:true,opacity:.92,side:THREE.DoubleSide,depthWrite:false});
+  const mouth=new THREE.Mesh(new THREE.CircleGeometry(.72,11),mouthMat);
+  mouth.position.set(c.x+.10,1.26,c.z);mouth.rotation.y=Math.PI/2;mouth.scale.set(1,.82,1.28);
+  mouth.name='Dark west-wall fissure mouth';root.add(mouth);
   // Rope remains visible in both level views and reaches the cave floor.
   const anchor={x:c.x-.52,z:c.z-.32};
   const beam=box(upper,'Rope anchor beam',c.x-.62,c.depth+.17,c.z-1.05,2.3,.24,.25,darkWood);
@@ -227,8 +220,8 @@ export function buildConnection(world,c) {
   // ceiling. This prevents the rope from appearing to descend from empty sky.
   const area1Rope=new THREE.Group();area1Rope.name='Area 1 visible rope tail';area1Rope.visible=false;root.add(area1Rope);
   const tailCurve=new THREE.CatmullRomCurve3([
-    new THREE.Vector3(anchor.x+.04,2.48,anchor.z+.03),
-    new THREE.Vector3(anchor.x+.08,1.72,anchor.z+.06),
+    new THREE.Vector3(anchor.x+.04,1.78,anchor.z+.03),
+    new THREE.Vector3(anchor.x+.08,1.08,anchor.z+.06),
     new THREE.Vector3(anchor.x,.13,anchor.z)
   ]);
   const tail=new THREE.Mesh(new THREE.TubeGeometry(tailCurve,36,.032,7,false),ropeMat);tail.name='Rope hanging from cave ceiling';area1Rope.add(tail);
