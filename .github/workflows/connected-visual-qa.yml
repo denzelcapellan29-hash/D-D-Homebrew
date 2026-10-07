@@ -8,6 +8,9 @@ on:
       - 'js/world.js'
       - 'js/analysis.js'
       - '.github/workflows/connected-visual-qa.yml'
+concurrency:
+  group: mapforge-connected-qa-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   connected-scene:
     runs-on: ubuntu-latest
