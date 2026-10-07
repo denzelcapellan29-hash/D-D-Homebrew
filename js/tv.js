@@ -6,6 +6,7 @@ const presentation=document.getElementById('cinemaPresentation');
 let presentationMode='live';
 let stopRoom=null;
 let pendingRoom=null;
+let presentationSeq=0;
 function leaveRoom(){if(stopRoom){stopRoom();stopRoom=null;}}
 function enterRoom(scene){
  pendingRoom=scene;
@@ -14,17 +15,29 @@ function enterRoom(scene){
  try{stopRoom=createCinematicRoom(world,scene.room,scene.src);}catch(err){console.error('Cinematic room:',err);status.textContent='3D room unavailable. Choose Show original 2D map on the director.';status.hidden=false;}
 }
 
-function setPresentation(scene){
- presentation.replaceChildren();presentation.classList.remove('blackout');
+async function setPresentation(scene){
+ const seq=++presentationSeq;
  if(scene?.type!=='room3d')leaveRoom();
- presentation.classList.toggle('reveal',scene?.type==='reveal');
- presentation.classList.toggle('focus',scene?.type==='focus');
+
+ // Image-backed presentations are decoded before replacing the current TV
+ // frame. This avoids an ugly black flash while a reveal/focus asset loads.
+ if(scene?.type==='image'||scene?.type==='reveal'||scene?.type==='focus'){
+  const img=new Image();img.alt=scene.name||'Episode scene';img.decoding='async';img.src=scene.src;
+  try{await img.decode();}catch(err){console.error('Presentation image:',err);return;}
+  if(seq!==presentationSeq)return;
+  presentation.replaceChildren(img);presentation.classList.remove('blackout');
+  presentation.classList.toggle('reveal',scene.type==='reveal');
+  presentation.classList.toggle('focus',scene.type==='focus');
+  pendingRoom=null;presentationMode=scene.type;presentation.style.display='block';status.hidden=true;
+  return;
+ }
+
+ presentation.replaceChildren();presentation.classList.remove('blackout','reveal','focus');
  if(scene?.type==='room3d'){presentationMode='room3d';presentation.style.display='none';status.hidden=true;enterRoom(scene);return;}
  pendingRoom=null;
  if(!scene||scene.type==='live'){presentationMode='live';presentation.style.display='none';return;}
  presentationMode=scene.type;presentation.style.display='block';status.hidden=true;
  if(scene.type==='blackout'){presentation.classList.add('blackout');return;}
- if(scene.type==='image'||scene.type==='reveal'||scene.type==='focus'){const img=new Image();img.alt=scene.name||'Episode scene';img.src=scene.src;presentation.append(img);return;}
  const card=document.createElement('div');card.id='cinemaCard';const title=document.createElement('h1');title.textContent=scene.name||'';const caption=document.createElement('p');caption.textContent=scene.caption||'';card.append(title,caption);presentation.append(card);
 }
 
