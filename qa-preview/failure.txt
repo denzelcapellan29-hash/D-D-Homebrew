@@ -1,0 +1,5 @@
+AssertionError [ERR_ASSERTION]: 2D map not displayed
+
+0 !== 1
+
+    at run (/home/runner/work/D-D-Homebrew/D-D-Homebrew/tests/visual-qa.cjs:44:9)
