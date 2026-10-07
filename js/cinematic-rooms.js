@@ -99,7 +99,7 @@ function makeTrials(g){
  const pulse=[];
  // Four ritual basins are spaced farther apart and slightly larger so the
  // chamber reads as a major trial hall rather than a compact puzzle box.
- for(const [x,z,col] of [[-8.1,-4.1,0x208dea],[8.1,-4.1,0x28b88e],[-8.1,4.1,0xbcdde0],[8.1,4.1,0xaaa5c4]]){
+ for(const [x,z,col] of [[-8.1,-4.1,0x208dea],[8.1,-4.1,0x28b88e],[-8.1,4.1,0xd8ecee],[8.1,4.1,0x8f928d]]){
   pulse.push(water(g,x,z,1.78,col));
  }
  // Six monolithic pillars: taller, heavier and carved with brass collars.
