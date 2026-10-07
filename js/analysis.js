@@ -100,7 +100,10 @@ export function walkableAt(a, u, v) {
 }
 
 export function unpackSavedAnalysis(image, saved){
-  const a=createAnalysis(image,'relief',saved.sensitivity||46,saved.gridPixels||58);
+  // Preserve the authored analysis mode across Director -> TV sync. Losing
+  // "curated" here caused the TV window to rebuild Area 1 with generic mask
+  // extrusion even when the Director used the cinematic cave shell.
+  const a=createAnalysis(image,saved.analysisMode||'relief',saved.sensitivity||46,saved.gridPixels||58);
   if(saved.maskWidth===a.width&&saved.maskHeight===a.height&&typeof saved.mask==='string'){
     for(let i=0;i<a.mask.length;i++)a.mask[i]=saved.mask.charCodeAt(i)===49?1:0;
   } else if(saved.maskWidth && saved.maskHeight && typeof saved.mask==='string') {
