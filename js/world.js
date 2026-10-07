@@ -325,16 +325,18 @@ export class TabletopWorld {
     }
   }
   _buildCuratedCave(){
-    // Hand-authored continuous cave walls for the bundled Area 1 scene.
-    // Collision still comes from the curated mask, but presentation geometry
-    // follows the same left/right boundaries as smooth layered rock ridges.
+    // Bespoke Area 1 render shell. Collision remains source-faithful via the
+    // curated mask, but presentation uses continuous cliff ribbons instead of
+    // isolated procedural boulders or tube-like walls.
     const shell=new THREE.Group();shell.name='Area 1 cinematic cave shell';
-    const earth=stoneMaterial(this.surfaces,{color:0x4a4136,roughness:1});
-    const wallMat=stoneMaterial(this.surfaces,{color:0x383a35,roughness:1});
-    const upperMat=stoneMaterial(this.surfaces,{color:0x2b302d,roughness:1});
+    const earth=stoneMaterial(this.surfaces,{color:0x4a4137,roughness:1});
+    const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
+    const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
+    const ceilingMat=stoneMaterial(this.surfaces,{color:0x292d2a,roughness:1});
+    ceilingMat.side=THREE.DoubleSide;
 
-    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+14,this.worldH+18),earth);
-    bed.rotation.x=-Math.PI/2;bed.position.y=-.095;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
+    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
+    bed.rotation.x=-Math.PI/2;bed.position.y=-.10;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
 
     const profile=[
       [0.00,0.50,0.60],[0.06,0.49,0.615],[0.12,0.49,0.61],
@@ -345,59 +347,80 @@ export class TabletopWorld {
       [0.91,0.408,0.614],[0.95,0.40,0.626],[1.00,0.40,0.626]
     ];
 
-    const makePath=(side,y=0.52,outset=0)=>{
-      const pts=profile.map(([v,l,r])=>{
-        const u=(side<0?l:r)+(side<0?-outset:outset);
-        const p=this.mapToWorld(u,v);
-        return new V3(p.x,y,p.z);
-      });
-      // Continue the northern passage beyond the tactical map and taper inward.
-      const first=pts[0],xShift=side<0?.18:-.18;
-      pts.unshift(new V3(first.x+xShift, y, first.z-6.2),new V3(first.x+xShift*.55,y,first.z-3.1));
-      return new THREE.CatmullRomCurve3(pts,false,'centripetal');
-    };
+    const sidePoints=(side,outset=0)=>profile.map(([v,l,r],i)=>{
+      const u=(side<0?l:r)+(side<0?-outset:outset);
+      const p=this.mapToWorld(u,v);
+      return {x:p.x,z:p.z,h:2.25+.38*Math.sin(i*.92)+.22*Math.cos(i*.47)};
+    });
 
-    const addWall=(side)=>{
-      const lower=makePath(side,.42,.025);
-      const upper=makePath(side,1.18,.055);
-      const crown=makePath(side,2.05,.12);
-      const a=new THREE.Mesh(new THREE.TubeGeometry(lower,96,.72,10,false),wallMat);
-      a.name='Lower cave wall ridge';a.castShadow=true;a.receiveShadow=true;shell.add(a);
-      const b=new THREE.Mesh(new THREE.TubeGeometry(upper,96,.62,10,false),wallMat);
-      b.name='Upper cave wall ridge';b.castShadow=true;b.receiveShadow=true;shell.add(b);
-      const d=new THREE.Mesh(new THREE.TubeGeometry(crown,96,.44,9,false),upperMat);
-      d.name='Cave wall crown';d.castShadow=true;d.receiveShadow=true;shell.add(d);
-    };
-    addWall(-1);addWall(1);
+    const makeWall=(side)=>{
+      const pts=sidePoints(side,.018),verts=[],uvs=[];
+      for(let i=0;i<pts.length-1;i++){
+        const a=pts[i],b=pts[i+1];
+        const topA=a.h,topB=b.h;
+        const quad=[
+          [a.x,0,a.z,0,0],[b.x,0,b.z,1,0],
+          [b.x,topB,b.z,1,1],[a.x,topA,a.z,0,1]
+        ];
+        const order=[0,1,2,0,2,3];
+        for(const idx of order){const q=quad[idx];verts.push(q[0],q[1],q[2]);uvs.push(q[3],q[4]);}
+      }
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+      geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+      geo.computeVertexNormals();
+      const wall=new THREE.Mesh(geo,wallMat);wall.name='Continuous cave wall';wall.castShadow=true;wall.receiveShadow=true;shell.add(wall);
 
-    // Small embedded rock clusters break the spline silhouette without reading
-    // as separate boulders.
-    const lumpGeo=new THREE.IcosahedronGeometry(.48,1);
-    for(let i=0;i<20;i++){
-      const side=i%2?-1:1,idx=(i*5)%profile.length,[v,l,r]=profile[idx];
-      const u=(side<0?l:r)+side*.015,p=this.mapToWorld(u,v);
-      const m=new THREE.Mesh(lumpGeo,wallMat);m.position.set(p.x+side*(.15+(i%3)*.05),.55+(i%4)*.18,p.z);
-      m.scale.set(1.2+(i%3)*.22,.85+(i%2)*.25,1.25+(i%4)*.12);m.rotation.y=i*.77;
-      m.castShadow=true;m.receiveShadow=true;m.name='Embedded cave wall rock';shell.add(m);
+      // Sloped shoulder outside the walkable corridor hides the top edge and
+      // makes the wall read as part of a larger rock mass.
+      const out=sidePoints(side,.12),shoulderVerts=[];
+      for(let i=0;i<pts.length-1;i++){
+        const a=pts[i],b=pts[i+1],ao=out[i],bo=out[i+1];
+        const yA=a.h,yB=b.h;
+        const quad=[
+          [a.x,yA,a.z],[b.x,yB,b.z],
+          [bo.x,yB+.85,bo.z],[ao.x,yA+.85,ao.z]
+        ];
+        for(const idx of [0,1,2,0,2,3])shoulderVerts.push(...quad[idx]);
+      }
+      const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(shoulderVerts,3));sg.computeVertexNormals();
+      const sm=new THREE.Mesh(sg,shoulderMat);sm.name='Cave wall shoulder';sm.castShadow=true;sm.receiveShadow=true;shell.add(sm);
+    };
+    makeWall(-1);makeWall(1);
+
+    // Continue the corridor north past the map so first-person sees a passage,
+    // not a hard boundary.
+    const north=this.mapToWorld(.55,.0);
+    const tunnel=new THREE.Mesh(new THREE.PlaneGeometry(2.7,11),earth);
+    tunnel.rotation.x=-Math.PI/2;tunnel.position.set(north.x,-.078,north.z-5.0);tunnel.receiveShadow=true;tunnel.name='North tunnel continuation';shell.add(tunnel);
+    for(const side of [-1,1]){
+      const x=north.x+side*1.45;
+      const long=new THREE.Mesh(new THREE.BoxGeometry(.85,2.4,10.5),shoulderMat);
+      long.position.set(x,1.15,north.z-5.0);long.rotation.z=side*.045;long.name='Deep tunnel wall';long.castShadow=true;long.receiveShadow=true;shell.add(long);
     }
 
-    // First-person ceiling: hidden in Orbit, visible only while walking Area 1.
-    const ceilingGeo=new THREE.PlaneGeometry(this.worldW+7,this.worldH+9,12,18);
+    // First-person ceiling. It is hidden in Orbit so tactical readability stays
+    // clean, then enabled in Explore to eliminate the immersion-breaking sky.
+    const ceilingGeo=new THREE.PlaneGeometry(this.worldW+8,this.worldH+13,16,22);
     const pos=ceilingGeo.attributes.position;
     for(let i=0;i<pos.count;i++){
       const x=pos.getX(i),y=pos.getY(i);
-      pos.setZ(i,.24*Math.sin(x*.72)+.18*Math.cos(y*.61)+.08*Math.sin((x+y)*1.7));
+      pos.setZ(i,.22*Math.sin(x*.64)+.16*Math.cos(y*.51)+.09*Math.sin((x+y)*1.23));
     }
     pos.needsUpdate=true;ceilingGeo.computeVertexNormals();
-    const ceiling=new THREE.Mesh(ceilingGeo,upperMat);
-    ceiling.rotation.x=Math.PI/2;ceiling.position.y=4.25;ceiling.name='Area 1 cave ceiling';
+    const ceiling=new THREE.Mesh(ceilingGeo,ceilingMat);
+    ceiling.rotation.x=Math.PI/2;ceiling.position.y=3.65;ceiling.name='Area 1 cave ceiling';
     ceiling.receiveShadow=true;ceiling.visible=false;shell.add(ceiling);this.caveCeiling=ceiling;
 
-    // A dark continuation floor helps the passage disappear naturally into fog.
-    const north=this.mapToWorld(.55,.0);
-    const tunnel=new THREE.Mesh(new THREE.PlaneGeometry(2.5,10.0),earth);
-    tunnel.rotation.x=-Math.PI/2;tunnel.position.set(north.x,-.078,north.z-4.5);tunnel.name='North tunnel continuation';shell.add(tunnel);
-
+    // A few small embedded masses soften corners without taking over the shot.
+    const lumpGeo=new THREE.IcosahedronGeometry(.42,1);
+    for(let i=0;i<10;i++){
+      const side=i%2?-1:1,idx=(i*3)%profile.length,[v,l,r]=profile[idx];
+      const u=(side<0?l:r),p=this.mapToWorld(u,v);
+      const m=new THREE.Mesh(lumpGeo,wallMat);m.position.set(p.x+side*.12,.42+(i%3)*.24,p.z);
+      m.scale.set(1.1+(i%2)*.25,.8+(i%3)*.12,1.1+(i%4)*.10);m.rotation.y=i*.71;
+      m.castShadow=true;m.receiveShadow=true;m.name='Embedded cave wall rock';shell.add(m);
+    }
     this.worldRoot.add(shell);
   }
   _buildGrid(){
