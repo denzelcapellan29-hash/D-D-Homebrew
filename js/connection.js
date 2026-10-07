@@ -29,35 +29,79 @@ export function buildConnection(world,c) {
     const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
     m.name=name;m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
   }
-  // Real hole through the warehouse floor, rather than a black painted disc.
+  // Catastrophic artifact rupture: deliberately asymmetrical and torn rather than
+  // a circular engineered shaft. The playable rope opening remains compact, but
+  // the visible break has lobes and branch fractures that shear the floor outward.
   const shape=new THREE.Shape();
   shape.moveTo(-c.halfW,-c.halfH);shape.lineTo(c.halfW,-c.halfH);
   shape.lineTo(c.halfW,c.halfH);shape.lineTo(-c.halfW,c.halfH);shape.closePath();
   const hole=new THREE.Path();
-  for(let i=0;i<=40;i++){
-    const a=-i/40*Math.PI*2,r=c.r*(1+.045*Math.sin(i*2.7));
-    if(i===0)hole.moveTo(Math.cos(a)*r,Math.sin(a)*r);
-    else hole.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+  const rupture=[];
+  for(let i=0;i<52;i++){
+    const a=-i/52*Math.PI*2;
+    const lobe=.18*Math.sin(i*1.73)+.11*Math.sin(i*3.91)+.07*Math.sin(i*.61);
+    const directional=.24*Math.max(0,Math.cos(a+.35))+.12*Math.max(0,Math.cos(a*2-1.1));
+    const r=c.r*(1.02+lobe+directional);
+    rupture.push([Math.cos(a)*r,Math.sin(a)*r]);
   }
+  rupture.forEach(([x,z],i)=>{if(i===0)hole.moveTo(x,z);else hole.lineTo(x,z);});
   hole.closePath();shape.holes.push(hole);
   const floor=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.12,bevelEnabled:false}),wood);
-  floor.name='Broken warehouse floor with open fissure';floor.rotation.x=-Math.PI/2;
+  floor.name='Warehouse floor torn open by magical rupture';floor.rotation.x=-Math.PI/2;
   floor.position.set(c.x,c.depth-.12,c.z);floor.receiveShadow=true;upper.add(floor);
-  // Plank seams stop at the fissure boundary.
+
+  // Plank seams stop at a deliberately generous rupture envelope so no clean
+  // circular pattern survives around the opening.
   for(let z=-c.halfH+.22;z<c.halfH;z+=.38){
-    const gap=Math.abs(z)<c.r*1.05?Math.sqrt((c.r*1.05)**2-z*z):0;
+    const local=z;
+    const envelope=c.r*(1.30+.10*Math.sin(local*4.2));
+    const gap=Math.abs(local)<envelope?Math.sqrt(Math.max(0,envelope**2-local*local)):0;
     if(gap){
-      for(const sign of [-1,1])box(upper,'Plank seam',c.x+sign*(c.halfW+gap)/2,c.depth+.008,c.z+z,c.halfW-gap,.01,.018,darkWood);
+      for(const sign of [-1,1])box(upper,'Interrupted floor seam',c.x+sign*(c.halfW+gap)/2,c.depth+.008,c.z+z,c.halfW-gap,.01,.018,darkWood);
     }else box(upper,'Plank seam',c.x,c.depth+.008,c.z+z,c.halfW*2,.01,.018,darkWood);
   }
-  // Retaining shaft rings. Front quarter omitted to make the depth legible.
-  // At the bottom, an additional east-facing opening physically meets Area 1.
-  for(let y=.38;y<c.depth;y+=.75)for(let i=0;i<28;i++){
-    const a=(i+.5)/28*Math.PI*2;
-    if(Math.sin(a)>.64 || (y<world.rockHeight+.6&&Math.cos(a)>.74))continue;
-    const m=box(shaft,'Fissure stone lining',c.x+Math.cos(a)*(c.r+.10),y,c.z+Math.sin(a)*(c.r+.10),.27,.70,.28,stone);
-    m.rotation.y=-a;
+
+  // Branching artifact fractures: dark glassy seams with restrained arcane
+  // emission, widening toward the central rupture.
+  const arcane=new THREE.MeshStandardMaterial({color:0x253b49,roughness:.62,metalness:.12,
+    emissive:0x355f7b,emissiveIntensity:.65});
+  const fracture=(angle,length,width,offset=0)=>{
+    for(let j=0;j<4;j++){
+      const t=(j+.5)/4,seg=length/4;
+      const bend=Math.sin((j+offset)*1.8)*.16;
+      const x=c.x+Math.cos(angle+bend)*(c.r*.72+t*length);
+      const z=c.z+Math.sin(angle+bend)*(c.r*.72+t*length);
+      const crack=box(upper,'Arcane fracture',x,c.depth+.022,z,width*(1-t*.58),.018,seg,arcane);
+      crack.rotation.y=-angle-bend;
+    }
+  };
+  fracture(.18,2.45,.12,1);fracture(2.58,1.85,.10,2);fracture(-1.54,1.55,.09,3);fracture(-2.72,1.18,.08,4);
+
+  // Slumped floor plates make the failure read as structural collapse rather
+  // than a decorative aperture.
+  for(let i=0;i<11;i++){
+    const a=i/11*Math.PI*2+.17,rad=c.r*(1.05+(i%3)*.10);
+    const slab=box(upper,'Dropped warehouse floor slab',c.x+Math.cos(a)*rad,c.depth-.03-(i%4)*.05,
+      c.z+Math.sin(a)*rad,.55+(i%3)*.18,.08,.42+(i%2)*.20,wood);
+    slab.rotation.y=-a+(i%2?.2:-.13);slab.rotation.z=(i%2?1:-1)*(.08+(i%3)*.035);
   }
+  // Natural, violently fractured shaft walls. Uneven rock teeth replace the old
+  // ring-like lining so the descent cannot read as masonry or a constructed well.
+  const shaftRand=n=>{const v=Math.sin(n*97.31+12.7)*43117.21;return v-Math.floor(v);};
+  for(let y=.25,band=0;y<c.depth;y+=.62,band++)for(let i=0;i<24;i++){
+    const a=(i+.35)/24*Math.PI*2;
+    if(Math.sin(a)>.70 || (y<world.rockHeight+.7&&Math.cos(a)>.72))continue;
+    const jitter=(shaftRand(i+band*31)-.5)*.32;
+    const radius=c.r+.12+jitter;
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.24+shaftRand(i+band*17)*.18,0),stone);
+    rock.name='Fractured natural fissure wall';
+    rock.position.set(c.x+Math.cos(a)*radius,y+(shaftRand(i+band*7)-.5)*.20,c.z+Math.sin(a)*radius);
+    rock.scale.set(.75+shaftRand(i+2)*.85,1.35+shaftRand(band+i)*1.25,.72+shaftRand(i+9)*.72);
+    rock.rotation.set(shaftRand(i+1)*2.4,-a,shaftRand(i+5)*1.8);
+    rock.castShadow=true;rock.receiveShadow=true;shaft.add(rock);
+  }
+  const abyssGlow=new THREE.PointLight(0x4a7896,11,13,2);
+  abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
   const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
   landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
   landing.name='Rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
@@ -76,11 +120,12 @@ export function buildConnection(world,c) {
   rope.name='Continuous rope from warehouse to Area 1';root.add(rope);
   const coil=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,6,28),rope.material);
   coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';root.add(coil);
-  for(let i=0;i<20;i++){
-    const a=i/20*Math.PI*2;
-    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.19+(i%3)*.06),stone);
-    rock.position.set(c.x+Math.cos(a)*(c.r+.2),c.depth+.08,c.z+Math.sin(a)*(c.r+.2));
-    rock.scale.set(1,.55,1);rock.name='Collapsed fissure rim rubble';upper.add(rock);
+  for(let i=0;i<29;i++){
+    const a=i/29*Math.PI*2+.11*Math.sin(i*1.9),rad=c.r*(1.03+(i%5)*.075);
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.16+(i%4)*.065),stone);
+    rock.position.set(c.x+Math.cos(a)*rad,c.depth+.02+(i%3)*.045,c.z+Math.sin(a)*rad);
+    rock.scale.set(.8+(i%3)*.35,.35+(i%4)*.13,.75+(i%2)*.45);rock.rotation.set(i*.37,a,i*.19);
+    rock.name='Exploded fissure rim rubble';upper.add(rock);
   }
   // Broken masonry perimeter, roof supports and remains of a red tile roof.
   for(const side of [-1,1]){
@@ -142,6 +187,35 @@ export function buildConnection(world,c) {
     const plank=box(upper,'Fallen timber',c.x+1.65+(i%3)*.55,c.depth+.07,c.z+.7+Math.floor(i/3)*.55,.16,.1,1.1,darkWood);
     plank.rotation.y=i*.81;
   }
+  // Waterdeep context shell: enough real street and neighboring massing to stop
+  // the warehouse from reading as a floating set. It remains deliberately low
+  // detail because it is framing geometry, not an explorable city district.
+  const streetMat=new THREE.MeshStandardMaterial({color:0x6e6a62,roughness:1});
+  const plaster=new THREE.MeshStandardMaterial({color:0xa18d75,roughness:1});
+  const slate=new THREE.MeshStandardMaterial({color:0x4a4f55,roughness:.96});
+  box(upper,'Cobblestone street context',c.x,c.depth-.22,c.z+8.4,19,.34,10.5,streetMat);
+  for(const side of [-1,1]){
+    const bx=c.x+side*8.2;
+    box(upper,'Neighboring Waterdeep facade',bx,c.depth+1.65,c.z+5.2,4.4,3.7,2.4,plaster);
+    for(let k=0;k<3;k++)box(upper,'Neighboring timber frame',bx+side*(k-1)*.8,c.depth+1.7,c.z+3.96,.11,3.5,.12,darkWood);
+    const roof=box(upper,'Neighboring slate roof',bx,c.depth+3.72,c.z+5.2,4.8,.16,2.8,slate);
+    roof.rotation.z=-side*.18;
+    for(let k=0;k<3;k++)box(upper,'Street crate',c.x+side*(5.7+k*.55),c.depth+.28,c.z+5.2+(k%2)*.65,.5,.55,.5,wood);
+  }
+  // Distant facade silhouettes close the horizon without obscuring orbit view.
+  for(let k=0;k<5;k++){
+    const x=c.x-7.4+k*3.7;
+    box(upper,'Distant district mass',x,c.depth+1.15,c.z+11.6,3.1,2.7,1.3,k%2?plaster:stone);
+  }
+  // Dust plume and magical light make the fissure the visual cause of the ruin.
+  const glow=new THREE.PointLight(0x547f9f,18,10,2);glow.position.set(c.x,c.depth-.55,c.z);upper.add(glow);
+  for(let i=0;i<18;i++){
+    const dustMat=new THREE.MeshBasicMaterial({color:0xc7baa2,transparent:true,opacity:.07+(i%4)*.018,depthWrite:false});
+    const dust=new THREE.Mesh(new THREE.SphereGeometry(.12+(i%3)*.06,8,6),dustMat);
+    dust.name='Rising rupture dust';dust.position.set(c.x+(roofRand(i+71)-.5)*2.2,c.depth+.18+(i%6)*.31,c.z+(roofRand(i+91)-.5)*1.8);
+    dust.scale.set(.5,1.8,.5);upper.add(dust);
+  }
+
   // Warning barrier across the open front of the damaged warehouse.
   const yellow=new THREE.MeshStandardMaterial({color:0xdab647,roughness:.7});
   for(const side of [-1,1])box(upper,'Barrier post',c.x+side*3.4,c.depth+.5,c.z+3.0,.08,1,.08,iron);
