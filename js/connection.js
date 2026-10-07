@@ -164,6 +164,9 @@ export function buildConnection(world,c) {
   shaftWall.name='Artifact-torn chasm walls';shaftWall.castShadow=true;shaftWall.receiveShadow=true;shaft.add(shaftWall);
   const abyssGlow=new THREE.PointLight(0x415866,3.6,9,2);
   abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
+  const depthMat=new THREE.MeshBasicMaterial({color:0x090d0f,transparent:true,opacity:.82,side:THREE.DoubleSide});
+  const depthCue=new THREE.Mesh(new THREE.CircleGeometry(c.r*1.18,40),depthMat);
+  depthCue.rotation.x=-Math.PI/2;depthCue.position.set(c.x,c.depth*.34,c.z);depthCue.name='Deep fissure darkness';shaft.add(depthCue);
   const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
   landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
   landing.name='Rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
@@ -184,10 +187,10 @@ export function buildConnection(world,c) {
   coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';root.add(coil);
   // Splintered floor structure around the tear; wood, not a decorative ring
   // of rocks, is the dominant edge language inside the warehouse.
-  for(let i=0;i<12;i++){
-    const [rx,rz]=rupture[i%rupture.length],a=Math.atan2(rz,rx);
-    const plank=box(upper,'Splintered rupture joist',c.x+rx*.92,c.depth+.02,c.z+rz*.92,.11,.09,.58+(i%4)*.17,darkWood);
-    plank.rotation.y=-a+(i%2?.24:-.18);plank.rotation.z=(i%3-1)*.07;
+  for(let i=0;i<7;i++){
+    const idx=(i*2)%rupture.length,[rx,rz]=rupture[idx],a=Math.atan2(rz,rx);
+    const plank=box(upper,'Splintered rupture joist',c.x+rx*1.03,c.depth+.015,c.z+rz*1.03,.10,.08,.46+(i%3)*.13,darkWood);
+    plank.rotation.y=-a+(i%2?.18:-.14);plank.rotation.z=(i%3-1)*.055;
   }
   // Broken masonry perimeter, roof supports and remains of a red tile roof.
   for(const side of [-1,1]){
@@ -220,12 +223,12 @@ export function buildConnection(world,c) {
     rock.position.set(x,c.depth+.06+r*.18,z);rock.rotation.set(angle,.3*i,.15);
     rock.scale.set(1.4,.5,.95);rock.name='Collapsed masonry fragment';upper.add(rock);
   }
-  for(let i=0;i<9;i++){
-    const x=c.x+(roofRand(i+6)-.5)*6.4,z=c.z+(roofRand(i+19)-.5)*4.6;
-    if(inShaft(c,x,z,.19))continue;
-    const debris=box(upper,'Shattered floorboard',x,c.depth+.16,z,.15,.09,.7+roofRand(i+66)*.8,darkWood);
-    debris.rotation.y=roofRand(i+29)*Math.PI;
-    debris.rotation.x=(roofRand(i+46)-.5)*.21;
+  for(let i=0;i<4;i++){
+    const side=i<2?-1:1;
+    const x=c.x+side*(2.25+roofRand(i+6)*1.0),z=c.z+.55+(i%2)*1.0;
+    const debris=box(upper,'Shattered floorboard',x,c.depth+.11,z,.14,.08,.82+roofRand(i+66)*.45,darkWood);
+    debris.rotation.y=.35+i*1.17;
+    debris.rotation.x=(roofRand(i+46)-.5)*.12;
   }
   for(let i=0;i<5;i++){
     const x=c.x-3.3+(i%2)*.9,z=c.z-2.5+Math.floor(i/2)*.65;
@@ -239,7 +242,16 @@ export function buildConnection(world,c) {
   // Waterdeep context: continuous cobbles and distant roofline masses. Keep
   // the context below the warehouse silhouette so it supports the shot instead
   // of competing with it.
-  box(upper,'Waterdeep cobbled street',c.x,c.depth-.21,c.z+4.4,24,.30,21,cobbles);
+  const streetShape=new THREE.Shape();
+  const sw=12,sd=10.5;
+  streetShape.moveTo(-sw,-sd);streetShape.lineTo(sw,-sd);streetShape.lineTo(sw,sd);streetShape.lineTo(-sw,sd);streetShape.closePath();
+  const warehouseVoid=new THREE.Path();
+  const wx=c.halfW+.42,wz=c.halfH+.42;
+  warehouseVoid.moveTo(-wx,-wz);warehouseVoid.lineTo(-wx,wz);warehouseVoid.lineTo(wx,wz);warehouseVoid.lineTo(wx,-wz);warehouseVoid.closePath();
+  streetShape.holes.push(warehouseVoid);
+  const street=new THREE.Mesh(new THREE.ShapeGeometry(streetShape),cobbles);
+  street.name='Waterdeep cobbled street around warehouse';street.rotation.x=-Math.PI/2;
+  street.position.set(c.x,c.depth-.205,c.z+3.9);street.receiveShadow=true;upper.add(street);
   const plaster=new THREE.MeshStandardMaterial({color:0x4d4b47,roughness:1});
   const roofDark=new THREE.MeshStandardMaterial({color:0x342c29,roughness:1});
   for(let k=0;k<5;k++){
