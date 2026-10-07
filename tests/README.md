@@ -13,3 +13,5 @@ node tests/visual-qa.cjs
 ```
 
 The tests use Python 3's built-in HTTP server to serve the app; no backend or hosted service is required for players.
+
+QA launch verification: GitHub Actions runner uses a separate headless software-WebGL browser.
