@@ -333,7 +333,7 @@ export class TabletopWorld {
     const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
     const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
     const ceilingTex=this.surfaces.stone.clone();ceilingTex.needsUpdate=true;ceilingTex.wrapS=ceilingTex.wrapT=THREE.RepeatWrapping;ceilingTex.repeat.set(6,9);ceilingTex.userData.shared=false;
-    const ceilingMat=new THREE.MeshBasicMaterial({color:0x514c42,map:ceilingTex,side:THREE.DoubleSide});
+    const ceilingMat=new THREE.MeshBasicMaterial({color:0x403d36,map:ceilingTex,side:THREE.DoubleSide});
 
     const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
     bed.rotation.x=-Math.PI/2;bed.position.y=-.10;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
@@ -395,15 +395,15 @@ export class TabletopWorld {
     }
     pos.needsUpdate=true;ceilingGeo.computeVertexNormals();
     const ceiling=new THREE.Mesh(ceilingGeo,ceilingMat);
-    ceiling.rotation.x=Math.PI/2;ceiling.position.y=2.95;ceiling.name='Area 1 cave ceiling';
+    ceiling.rotation.x=Math.PI/2;ceiling.position.y=3.25;ceiling.name='Area 1 cave ceiling';
     ceiling.receiveShadow=true;ceiling.visible=false;shell.add(ceiling);this.caveCeiling=ceiling;
     const stalMat=stoneMaterial(this.surfaces,{color:0x343630,roughness:1});
     this.caveCeilingDecor=new THREE.Group();this.caveCeilingDecor.name='Area 1 ceiling formations';this.caveCeilingDecor.visible=false;shell.add(this.caveCeilingDecor);
-    for(let i=0;i<9;i++){
-      const p=this.mapToWorld(.34+(i%3)*.15,.18+Math.floor(i/3)*.25);
-      const h=.42+(i%4)*.13;
-      const s=new THREE.Mesh(new THREE.ConeGeometry(.12+(i%3)*.035,h,7),stalMat);
-      s.position.set(p.x,2.92-h*.5,p.z);s.rotation.z=(i%2?1:-1)*.08;s.name='Cave stalactite';this.caveCeilingDecor.add(s);
+    for(let i=0;i<11;i++){
+      const p=this.mapToWorld(.31+(i%4)*.12,.14+Math.floor(i/4)*.28);
+      const h=.22+(i%4)*.08;
+      const s=new THREE.Mesh(new THREE.ConeGeometry(.055+(i%3)*.018,h,7),stalMat);
+      s.position.set(p.x,3.22-h*.5,p.z);s.rotation.z=(i%2?1:-1)*.045;s.name='Cave stalactite';this.caveCeilingDecor.add(s);
     }
 
     // Motivated cave lighting: warm spill near the rope landing and a very dim
@@ -566,7 +566,7 @@ export class TabletopWorld {
       this.walkPitch=clamp(Math.atan2(targetY-this.camera.position.y,horizontal),-.42,-.10);
     }else if(this.connection&&this.activeLevel==='area1'){
       this.walkYaw=0;
-      this.walkPitch=-.07;
+      this.walkPitch=-.035;
     }else{this.walkYaw=0;this.walkPitch=-.04;}
     this._applyWalkRotation();
   }
