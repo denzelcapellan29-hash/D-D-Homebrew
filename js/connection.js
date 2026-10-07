@@ -235,9 +235,9 @@ export function buildConnection(world,c) {
   // center stays open as the damaged entrance, but the building no longer
   // reads as a roof perched over a three-sided stage.
   for(const side of [-1,1]){
-    box(upper,'Broken warehouse front wall',c.x+side*3.55,c.depth+.58,c.z+c.halfH-.04,1.8,1.16,.28,wallStone);
-    const post=box(upper,'Splintered front corner post',c.x+side*4.16,c.depth+1.08,c.z+c.halfH-.12,.22,2.16,.22,darkWood);
-    post.rotation.z=side*.045;
+    box(upper,'Broken warehouse front wall',c.x+side*3.82,c.depth+.28,c.z+c.halfH-.04,1.24,.56,.28,wallStone);
+    const post=box(upper,'Splintered front corner post',c.x+side*4.22,c.depth+.69,c.z+c.halfH-.12,.20,1.38,.20,darkWood);
+    post.rotation.z=side*.06;
   }
   box(upper,'Exposed roof crossbeam',c.x,c.depth+3.65,c.z-2.8,8.1,.22,.25,darkWood);
   // Mostly-collapsed roof: exposed timber trusses dominate, with only a few
