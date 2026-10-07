@@ -8,7 +8,7 @@ const lineMat=new THREE.LineBasicMaterial({color:0xd8d5c6,transparent:true,opaci
 const rand=n=>{const s=Math.sin(n*121.13+19.17)*43758.545;return s-Math.floor(s)};
 const mesh=(g,geo,m,x=0,y=0,z=0)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;};
 const box=(g,w,h,d,x,y,z,m=STONE)=>mesh(g,new THREE.BoxGeometry(w,h,d),m,x,y,z);
-const sphere=(g,r,x,y,z,m=STONE,detail=0)=>mesh(g,new THREE.IcosahedronGeometry(r,detail),m,x,y,z);
+const sphere=(g,r,x,y,z,m=STONE,detail=1)=>mesh(g,new THREE.IcosahedronGeometry(r,detail),m,x,y,z);
 const cyl=(g,rt,rb,h,x,y,z,m=STONE,sides=16)=>mesh(g,new THREE.CylinderGeometry(rt,rb,h,sides),m,x,y,z);
 function segment(g,a,b,r,m,side=8){const p=new V(...a),q=new V(...b),d=q.clone().sub(p);const o=cyl(g,r,r,d.length(),...(p.add(q).multiplyScalar(.5)).toArray(),m,side);o.quaternion.setFromUnitVectors(new V(0,1,0),d.normalize());return o;}
 function line(g,a,b,m=lineMat){const o=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V(...a),new V(...b)]),m);g.add(o);return o;}
@@ -71,10 +71,10 @@ function masonry(g,w,d,height=2.35){
 function cave(g,w,d,seed=0){
  floor(g,w,d,false);
  const mats=[M(0x363935),M(0x46423a),M(0x57544b),M(0x242a2b)];
- for(let i=0;i<175;i++){
-  const a=i/175*Math.PI*2,ir=(.94+rand(i+seed)*.21),x=Math.cos(a)*w*.505*ir,z=Math.sin(a)*d*.51*ir;
+ for(let i=0;i<133;i++){
+  const a=i/133*Math.PI*2,ir=(.94+rand(i+seed)*.21),x=Math.cos(a)*w*.505*ir,z=Math.sin(a)*d*.51*ir;
   const r=.32+rand(i+seed+9)*.71,h=.45+rand(i+seed+19)*1.2;
-  const o=sphere(g,r,x,h*.47,z,mats[i%4]);o.scale.set(1+rand(i+seed+37)*1.15,h/r,1+rand(i+seed+57)*.83);o.rotation.set(rand(i+45)*2,rand(i+78)*6,rand(i+87)*.3);
+  const o=sphere(g,r,x,h*.47,z,mats[i%4],i%4===0?1:0);o.scale.set(1+rand(i+seed+37)*1.15,h/r,1+rand(i+seed+57)*.83);o.rotation.set(rand(i+45)*2,rand(i+78)*6,rand(i+87)*.3);
  }
  debris(g,w,d,44,seed+106);
 }
@@ -130,7 +130,7 @@ function makeTraps(g){
 }
 function cocoon(g,x,z,size=1){
  const silk=M(0xcecab9,.98);const mat=M(0xeae5d9,.9,{transparent:true,opacity:.4});
- const core=sphere(g,size*.54,x,2.25+size*.7,z,silk);core.scale.set(.90,1.55,.75);
+ const core=sphere(g,size*.54,x,2.25+size*.7,z,silk,2);core.scale.set(.90,1.80,.79);
  for(let j=0;j<15;j++){
   const a=j/15*Math.PI*2,r=size*.55;
   const start=[x+Math.cos(a)*r*.55,2.1,z+Math.sin(a)*r*.4];
@@ -141,8 +141,8 @@ function cocoon(g,x,z,size=1){
 }
 function spider(g,x,z){
  const shell=M(0x171b1b),sac=M(0x302820),red=M(0xff4b21,.2,{emissive:0x9a1c0b,emissiveIntensity:.92});
- const body=sphere(g,.64,x,.81,z,shell);body.scale.set(1.2,.83,1.2);
- const belly=sphere(g,.74,x,1.0,z+.71,sac);belly.scale.set(1.12,.84,1.04);
+ const body=sphere(g,.73,x,.81,z,shell,2);body.scale.set(1.2,.83,1.2);
+ const belly=sphere(g,.82,x,1.0,z+.71,sac,2);belly.scale.set(1.12,.84,1.04);
  for(let i=0;i<8;i++){
   const side=i%2?1:-1,j=Math.floor(i/2),t=(j-1.5)*.43;
   const a=[x+side*.44,.88,z+t],b=[x+side*(1.35+j*.18),1.72,z+t*2.1],c=[x+side*(2.1+j*.14),.10,z+t*2.6];
@@ -174,10 +174,18 @@ function makeGoblin(g){const w=20,d=14;cave(g,w,d,120);
  for(let i=0;i<21;i++){const x=(rand(i+102)-.5)*w*.75,z=(rand(i+122)-.5)*d*.78;
   const h=.7+rand(i+23)*2;const o=mesh(g,new THREE.ConeGeometry(.23+rand(i+54)*.37,h,6),STONE,x,h/2,z);o.rotation.z=(rand(i+78)-.5)*.18;
  }
- // One nervous goblin with a false staff of magical authority.
- const body=sphere(g,.38,-3,.75,1.1,M(0x596044));body.scale.y=1.1;
- sphere(g,.32,-3,1.33,1.1,M(0x77764a));segment(g,[-2.6,.25,1.1],[-2.58,2.15,1.1],.052,WOOD);
- const pulse=[torch(g,4.5,-3.5)];return {camera:new V(1.0,7.3,16),target:new V(-2,.7,0),pulse};}
+ // One nervous goblin holding a wooden stick (not a magical staff).
+ const skin=M(0x7c8551),cloak=M(0x574c32),eyes=M(0xf6df9b,.4,{emissive:0xc4a85d,emissiveIntensity:.25});
+ const torso=sphere(g,.49,-2.5,.87,1.4,cloak,2);torso.scale.set(.78,1.2,.62);
+ const head=sphere(g,.39,-2.5,1.70,1.43,skin,2);head.scale.set(1.05,.78,.87);
+ for(const side of [-1,1]){
+  const ear=sphere(g,.22,-2.5+side*.43,1.66,1.40,skin,1);ear.scale.set(1.2,.36,.7);
+  sphere(g,.07,-2.5+side*.17,1.73,1.73,eyes,2);
+  segment(g,[-2.5+side*.2,.6,1.4],[-2.5+side*.28,.08,1.5],.11,skin);
+ }
+ segment(g,[-2.14,1.22,1.44],[-1.97,.44,1.5],.10,skin);
+ segment(g,[-1.95,.18,1.52],[-1.79,2.45,1.63],.052,WOOD);
+ const pulse=[torch(g,4.5,-3.5)];return {camera:new V(1.0,7.3,16),target:new V(-2,.95,0),pulse};}
 function makeStomp(g){const w=23,d=14;cave(g,w,d,210);
  const foot=M(0x735c47),nail=M(0x9f8b73);
  for(let i=0;i<74;i++){
@@ -185,9 +193,20 @@ function makeStomp(g){const w=23,d=14;cave(g,w,d,210);
   const p=sphere(g,s,x,.07,z,foot);p.scale.set(.65,.32,1.36);p.rotation.y=rand(i+100)*6;
   for(let toe=0;toe<3;toe++)sphere(g,s*.24,x+(toe-1)*s*.38,.08,z+s,nail);
  }
- const block=box(g,3.8,1.15,3.8,0,3.6,0,M(0x6e6a60));block.rotation.z=.07;
- for(let i=0;i<4;i++)segment(g,[i<2?-1.7:1.7,4.2,i%2?-1.7:1.7],[i<2?-3.1:3.1,5.7,i%2?-3.1:3.1],.11,DARK);
- const pulse=[torch(g,-9,-4),torch(g,9,4)];return {camera:new V(-.2,9,17),target:new V(0,1.1,0),pulse};}
+ // A suspended enormous granite foot: toes face the party, and the sole has
+ // distinct heel/arch and carved toe joints instead of a rectangular block.
+ const granite=M(0x64625e),toeStone=M(0x7c7a6f);
+ const sole=sphere(g,1.78,0,3.55,-.3,granite,2);sole.scale.set(1.14,.41,1.56);sole.rotation.z=-.045;
+ const heel=sphere(g,1.0,0,3.62,-1.9,granite,1);heel.scale.set(1,.65,.75);
+ for(let toe=0;toe<5;toe++){
+  const x=(toe-2)*.68, size=toe===0?.76:toe===1?.66:.58-(toe-2)*.065;
+  const t=sphere(g,size,x,3.44,2.05-((toe-1.8)**2)*.09,toeStone,2);
+  t.scale.set(.62,.48,.96);
+  // chipped granite edges
+  sphere(g,.075,x,3.18,2.28-((toe-1.8)**2)*.09,M(0xaaa596),1);
+ }
+ for(let i=0;i<4;i++)segment(g,[i<2?-1.1:1.1,4.0,i%2?-1.1:1.1],[i<2?-2.3:2.3,5.4,i%2?-2.1:2.1],.10,DARK);
+ const pulse=[torch(g,-9,-4),torch(g,9,4)];return {camera:new V(-.2,8.9,15.9),target:new V(0,1.4,0),pulse};}
 function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
  const waterMat=M(0x285249,.27,{metalness:.27,transparent:true,opacity:.9,emissive:0x082c25,emissiveIntensity:.5});
  cyl(g,4.0,4.0,.12,0,.05,0,M(0x101b1b),64);cyl(g,3.65,3.65,.035,0,.11,0,waterMat,64);ring(g,4.09,.24,0,.21,0,STONE);
@@ -201,32 +220,69 @@ function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
   const x=-7.5+i*2.3;const drain=cyl(g,.33,.34,2,x,2.1,-d/2+.6,M(0x66635c));drain.rotation.z=Math.PI/2;
  }
  const pulse=[torch(g,-9,4),torch(g,9,4,0xa2f2b7)];return {camera:new V(-.5,8.7,17),target:new V(0,1.55,0),pulse};}
-function makeDragon(g){const w=23,d=14;cave(g,w,d,313);
- const gold=M(0xb59a52,.65,{metalness:.24}),wing=M(0x6e5d3f,.86,{side:THREE.DoubleSide});
- const body=sphere(g,1.6,0,1.35,0,gold);body.scale.set(1.46,.86,.96);
- const head=sphere(g,.86,1.6,1.73,-.6,gold);head.scale.set(1.15,.74,.9);
+function makeDragon(g){
+ const w=23,d=14;cave(g,w,d,313);
+ // Dabshabah is a wounded, young BRASS dragon: a possible ally, not a boss
+ // indicator. Rounded anatomical parts read as a small resting wyrm.
+ const gold=M(0xb18b43,.52,{metalness:.25}),amber=M(0xd8b56d,.55,{metalness:.17});
+ const wing=M(0x65513a,.88,{side:THREE.DoubleSide}),horn=M(0x907447);
+ const eye=M(0xe9ac43,.22,{emissive:0x8a4e13,emissiveIntensity:.55});
+ const body=sphere(g,1.12,0,1.28,-.30,gold,2);body.scale.set(1.35,.86,1.65);
+ const chest=sphere(g,.89,0,1.36,.56,amber,2);chest.scale.set(.95,.87,1.13);
+ const neck=sphere(g,.73,0,1.61,1.36,gold,2);neck.scale.set(.83,1.05,1.08);
+ const head=sphere(g,.64,0,1.69,2.07,gold,2);head.scale.set(1.16,.74,1.14);
+ const snout=sphere(g,.50,0,1.49,2.60,amber,2);snout.scale.set(1.09,.55,1.34);
  for(const side of [-1,1]){
-  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([side*.7,1.8,0,side*4.5,3.4,1.1,side*3.8,.48,-1.5],3));geo.computeVertexNormals();mesh(g,geo,wing);
-  segment(g,[1.4+side*.12,2.16,-.88],[1.2+side*.48,2.79,-1.4],.09,gold);
+  const jaw=sphere(g,.21,side*.35,1.38,2.52,gold,2);jaw.scale.set(.88,.55,1.37);
+  sphere(g,.087,side*.43,1.85,2.40,eye,2);
+  sphere(g,.05,side*.26,1.63,3.08,M(0x382e21),2);
+  segment(g,[side*.40,1.98,1.80],[side*.66,2.62,1.21],.14,horn,12);
+  segment(g,[side*.70,.94,.60],[side*1.10,.43,1.23],.19,gold,12);
+  segment(g,[side*1.10,.43,1.23],[side*1.24,.16,1.54],.15,gold,12);
+  for(let j=0;j<3;j++)segment(g,[side*(1.15+j*.09),.22,1.50+j*.07],[side*(1.22+j*.13),.12,1.76+j*.08],.047,horn,8);
+  // Swept-back folded leathery wing with supporting finger bones.
+  const verts=[side*.56,1.72,-.58, side*3.8,3.18,-2.32, side*3.22,.47,-2.9,
+    side*.56,1.72,-.58, side*3.22,.47,-2.9, side*1.85,1.18,-.25];
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.computeVertexNormals();
+  mesh(g,geo,wing);
+  segment(g,[side*.56,1.75,-.55],[side*3.8,3.18,-2.32],.09,horn,8);
+  segment(g,[side*.56,1.75,-.55],[side*3.22,.48,-2.9],.055,horn,8);
  }
- for(let i=0;i<6;i++)sphere(g,.21,2.3+i*.17,1.1,-1.1+(i%2)*.25,gold);
- // Two darkmantles hang over the injured brass wyrmling.
+ // Tail curls back across the cavern floor, with a few dorsal spines.
+ const path=new THREE.CatmullRomCurve3([new V(0,1.1,-1.7),new V(.7,.77,-2.7),new V(1.8,.57,-3.4),new V(2.4,.55,-2.8)]);
+ mesh(g,new THREE.TubeGeometry(path,26,.23,10,false),gold);
+ for(let i=0;i<6;i++){
+  const p=path.getPoint((i+.5)/8);mesh(g,new THREE.ConeGeometry(.15,.34,5),horn,p.x,p.y+.26,p.z);
+ }
+ // A wound near the shoulder: texture cue rather than gratuitous gore.
+ const bruise=sphere(g,.29,-.86,1.68,.16,M(0x744b31,.95),2);bruise.scale.set(1.32,.17,.68);
+ // Two darkmantles hang above the recovering dragon, partly silhouetted.
  for(const x of [-3.8,4.1]){
-  sphere(g,.43,x,3.35,-2.9,DARK);for(let i=0;i<4;i++)segment(g,[x,3.2,-2.9],[x+(i-1.5)*.52,2.1,-2.2],.065,DARK);
+  sphere(g,.43,x,3.35,-2.9,DARK,2);
+  for(let i=0;i<4;i++)segment(g,[x,3.2,-2.9],[x+(i-1.5)*.52,2.1,-2.2],.065,DARK);
  }
- const pulse=[torch(g,-8,-5,0xff9f4d),torch(g,8,-4,0xffc873)];return {camera:new V(1.1,8.3,17),target:new V(0,1.5,0),pulse};}
+ const pulse=[torch(g,-8,-5,0xff9f4d),torch(g,8,-4,0xffc873)];
+ return {camera:new V(1.3,7.6,15.3),target:new V(0,1.5,.6),pulse};
+}
 function makeShrine(g){const w=23,d=14;floor(g,w,d);masonry(g,w,d,3.9);
  const altar=box(g,5.1,1.2,3.3,0,.6,-1.4,M(0x69685e));
  for(let i=0;i<6;i++)box(g,.58,1.85,.65,-8.4+i*3.36,.92,-5.3,M(0x504e49));
  const metal=M(0xb8a15f,.34,{metalness:.72}),ghost=M(0x8c7cd0,.24,{emissive:0x423075,emissiveIntensity:.6});
- const center=sphere(g,.44,0,2.48,-1.4,ghost);const arcs=[];
+ const center=sphere(g,.50,0,2.68,-1.4,ghost,2);const arcs=[];
  for(let j=0;j<4;j++){
-  const o=ring(g,1.05+j*.27,.045,0,2.45,-1.4,metal);o.rotation.x=(j+1)*.37;o.rotation.y=j*1.1;arcs.push(o);
+  const o=ring(g,1.12+j*.32,.052,0,2.62,-1.4,metal);o.rotation.x=(j+1)*.37;o.rotation.y=j*1.1;arcs.push(o);
  }
+ // The broken Orrery of the Wanderer: broken radial braces and missing planets.
+ for(let k=0;k<5;k++){
+  const a=k*1.42,rad=1.36+(k%3)*.22;
+  segment(g,[0,2.62,-1.4],[Math.cos(a)*rad,2.65+Math.sin(a)*.65,-1.4+Math.sin(a)*rad*.5],.048,metal,8);
+  if(k!==2)sphere(g,.15+rand(k+13)*.11,Math.cos(a)*rad,2.65+Math.sin(a)*.65,-1.4+Math.sin(a)*rad*.5,metal,2);
+ }
+ for(let k=0;k<4;k++)box(g,.33,.11,.24,-1.8+k*1.16,1.30,-.2+k%2*.18,M(0x4c453d));
  for(let i=0;i<10;i++){const x=(rand(i+300)-.5)*9,z=(rand(i+340)-.5)*5;
   const o=sphere(g,.1,x,.16,z,ghost);o.scale.y=.44;
  }
- const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.5,8.4,17.4),target:new V(0,1.15,-1),pulse,arcs};}
+ const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.3,8.0,15.6),target:new V(0,1.28,-1),pulse,arcs};}
 const BUILDERS={trials:makeTrials,traps:makeTraps,death:makeDeath,goblin:makeGoblin,stomp:makeStomp,tentacle:makeTentacle,dragon:makeDragon,shrine:makeShrine};
 export function createCinematicRoom(world,room){
  const root=new THREE.Group();root.name='Episode 1 / '+room;world.scene.add(root);
