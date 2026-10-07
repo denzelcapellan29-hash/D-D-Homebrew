@@ -180,7 +180,8 @@ export class TabletopWorld {
       const p=this.mapToWorld(x/w,y/h);
       if(this.connection&&inLanding(this.connection,p.x,p.z))return 0;
       const blocked=1-count/Math.max(total,1);
-      return blocked* this.rockHeight *(.82+.32*rand(x,y));
+      // Raised cave rim stays above eye height instead of tapering into a floating curtain.
+      return blocked>.01 ? this.rockHeight*(1.0+.15*rand(x,y)) : 0;
     };
     for(let j=0;j<=h;j++)for(let i=0;i<=w;i++){
       const x=(i/w-.5)*this.worldW,z=(j/h-.5)*this.worldH;
@@ -189,7 +190,7 @@ export class TabletopWorld {
       const idx=Math.min(h-1,Math.max(0,j))*w+Math.min(w-1,Math.max(0,i));
       const light=brightness[idx]||.4;
       const t=rand(i+91,j+22);
-      colors.push(.40+light*.32+t*.055,.39+light*.29+t*.045,.37+light*.265+t*.045);
+      colors.push(.26+light*.13+t*.025,.255+light*.12+t*.02,.24+light*.11+t*.018);
     }
     for(let j=0;j<h;j++)for(let i=0;i<w;i++){
       const p=this.mapToWorld((i+.5)/w,(j+.5)/h);
@@ -204,6 +205,32 @@ export class TabletopWorld {
     geo.setIndex(indices);geo.computeVertexNormals();
     const stone=new THREE.Mesh(geo,stoneMaterial(this.surfaces,{color:0xffffff,vertexColors:true,flatShading:false}));
     stone.castShadow=true;stone.receiveShadow=true;stone.name='Auto-extruded stone walls';this.worldRoot.add(stone);
+    // A heightfield alone has no underside. Camera-height views previously saw
+    // bright floating strips with sky visible beneath. Close every traversable
+    // rock boundary with a properly lit vertical face down to the ground.
+    const cliff=[],cliffColor=[];
+    const addFace=(ax,az,bx,bz)=>{
+      const hA=this.rockHeight*(1.02+rand(Math.round(ax*20),Math.round(az*20))*.14);
+      const hB=this.rockHeight*(1.02+rand(Math.round(bx*20),Math.round(bz*20))*.14);
+      cliff.push(ax,0,az,bx,0,bz,bx,hB,bz,ax,0,az,bx,hB,bz,ax,hA,az);
+      for(let k=0;k<6;k++)cliffColor.push(.30,.29,.27);
+    };
+    const sx=this.worldW/w,sz=this.worldH/h;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      if(!mask[y*w+x])continue;
+      const x0=(x/w-.5)*this.worldW,x1=x0+sx,z0=(y/h-.5)*this.worldH,z1=z0+sz;
+      if(y===0||!mask[(y-1)*w+x])addFace(x1,z0,x0,z0);
+      if(x===w-1||!mask[y*w+x+1])addFace(x1,z1,x1,z0);
+      if(y===h-1||!mask[(y+1)*w+x])addFace(x0,z1,x1,z1);
+      if(x===0||!mask[y*w+x-1])addFace(x0,z0,x0,z1);
+    }
+    const cliffGeo=new THREE.BufferGeometry();
+    cliffGeo.setAttribute('position',new THREE.Float32BufferAttribute(cliff,3));
+    cliffGeo.setAttribute('color',new THREE.Float32BufferAttribute(cliffColor,3));
+    cliffGeo.computeVertexNormals();
+    const cliffMesh=new THREE.Mesh(cliffGeo,new THREE.MeshStandardMaterial({color:0x89877e,vertexColors:true,roughness:1,side:THREE.DoubleSide,flatShading:true}));
+    cliffMesh.name='Solid cave boundary faces';cliffMesh.castShadow=true;cliffMesh.receiveShadow=true;
+    this.worldRoot.add(cliffMesh);
   }
   _buildRubble(){
     const {width:w,height:h,mask}=this.analysis;
