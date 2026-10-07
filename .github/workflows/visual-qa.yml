@@ -11,6 +11,8 @@ on:
       - 'assets/**'
       - 'tests/**'
       - '.github/workflows/visual-qa.yml'
+permissions:
+  contents: write
 jobs:
   screenshot-qa:
     runs-on: ubuntu-latest
@@ -51,3 +53,32 @@ jobs:
           name: mapforge-visual-qa
           path: qa-artifacts/
           if-no-files-found: warn
+
+      - name: Prepare small visual QA previews
+        if: always()
+        shell: bash
+        run: |
+          python -m pip install --quiet pillow
+          mkdir -p qa-preview
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          for p in sorted(Path('qa-artifacts').glob('*.png')):
+              try:
+                  with Image.open(p) as im:
+                      im.convert('RGB').resize((1200,675)).save(Path('qa-preview')/(p.stem+'.jpg'),quality=74,optimize=True)
+              except Exception as e:
+                  print('preview failure',p,e)
+          PY
+          test ! -f qa-artifacts/results.json || cp qa-artifacts/results.json qa-preview/results.json
+          test ! -f qa-artifacts/failure.txt || cp qa-artifacts/failure.txt qa-preview/failure.txt
+      - name: Publish visual QA previews to GitHub
+        if: always()
+        shell: bash
+        run: |
+          if [ -z "$(find qa-preview -maxdepth 1 -type f -print -quit)" ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f qa-preview/
+          git commit -m "Save visual QA previews for $GITHUB_SHA [skip ci]" || exit 0
+          git push origin HEAD:main
