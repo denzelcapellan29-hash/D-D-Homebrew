@@ -86,13 +86,19 @@ function water(g,x,z,r,color){
  ring(g,r-.28,.012,x,.051,z,M(0xe1f5f3,.19,{transparent:true,opacity:.37,emissive:color,emissiveIntensity:.44}));
  const light=new THREE.PointLight(color,10,7,2);light.position.set(x,1.15,z);g.add(light);return light;
 }
-function reliefFigure(g,x,y,z,flip=1){
- const stone=M(0x6d6a60,.94);
- // Shallow bas-relief: hooded robed figure bending toward a circular pool.
- sphere(g,.16,x,y+.46,z,stone,1);
- const robe=mesh(g,new THREE.ConeGeometry(.27,.72,7),stone,x,y,z);robe.rotation.z=flip*.13;
- const arm=segment(g,[x+flip*.12,y+.20,z+.015],[x+flip*.34,y-.02,z+.02],.045,stone,6);
- const basin=mesh(g,new THREE.TorusGeometry(.30,.045,6,18),stone,x+flip*.48,y-.18,z+.01);basin.rotation.x=Math.PI/2;
+function reliefFigure(g,x,y,z,accent=0x6d6a60){
+ // TV-readable vertical bas-relief panel: a hooded robed figure visibly
+ // submerging into a carved pool. It faces the room rather than hiding edge-on.
+ const recess=M(0x454640,.98),stone=M(accent,.91),dark=M(0x33342f,.98);
+ box(g,2.55,2.45,.16,x,y,z,recess);
+ const halo=mesh(g,new THREE.RingGeometry(.56,.72,28),stone,x,y+.43,z+.095);halo.scale.set(1,.92,1);
+ const head=sphere(g,.19,x,y+.45,z+.16,stone,2);head.scale.z=.30;
+ const hood=mesh(g,new THREE.ConeGeometry(.36,.48,9),stone,x,y+.27,z+.15);hood.scale.z=.34;hood.rotation.z=Math.PI;
+ const robe=mesh(g,new THREE.ConeGeometry(.50,1.10,9),stone,x,y-.28,z+.15);robe.scale.z=.28;
+ for(const side of [-1,1])segment(g,[x+side*.20,y+.02,z+.19],[x+side*.48,y-.48,z+.20],.055,stone,7);
+ const basin=mesh(g,new THREE.TorusGeometry(.62,.075,8,32),stone,x,y-.73,z+.20);basin.scale.y=.38;
+ const water=mesh(g,new THREE.CircleGeometry(.54,28),M(0x556b70,.75,{emissive:0x182b30,emissiveIntensity:.22}),x,y-.73,z+.205);water.scale.y=.35;
+ for(let i=0;i<3;i++){const r=.16+i*.12;const ripple=mesh(g,new THREE.TorusGeometry(r,.018,5,22),dark,x,y-.73,z+.22);ripple.scale.y=.35;}
 }
 function makeTrials(g){
  const w=29,d=17.5;floor(g,w,d);masonry(g,w,d,3.35);
@@ -111,11 +117,10 @@ function makeTrials(g){
    box(g,.13,1.7,.10,x+Math.sin(ang)*.62,1.35,z+Math.cos(ang)*.62,M(0x74736a));
   }
  }
- // Source detail: the walls depict robed figures submerging themselves
- // in the four pools. These are shallow reliefs, not readable GM text.
- for(const side of [-1,1])for(let i=0;i<4;i++){
-  const z=-5.8+i*3.85;
-  reliefFigure(g,side*(w/2-.055),1.72,z,side);
+ // Source detail: the wall carvings must read from the presentation camera.
+ // Four large relief panels on the far wall show robed figures submerging.
+ for(const [x,accent] of [[-10.2,0x71808a],[-3.4,0x68775d],[3.4,0x85877e],[10.2,0x77716a]]){
+  reliefFigure(g,x,1.72,-d/2+.34,accent);
  }
  // Raised threshold and tall paired stone doors at the east end.
  box(g,.95,.22,4.0,w/2-.72,.11,0,M(0x57564f));
@@ -132,7 +137,7 @@ function makeTrials(g){
  }
  for(const [x,z] of [[-12.4,-7.0],[-12.4,7.0],[12.4,-7.0],[12.4,7.0]])torch(g,x,z,0xffac61);
  debris(g,w-5,d-3,18,19);
- return {camera:new V(-1.5,10.8,20.8),target:new V(0,.82,.2),pulse};
+ return {camera:new V(-1.2,7.6,15.4),target:new V(0,1.08,-1.0),pulse,fov:47};
 }
 function pressure(g,x,w,d,m){const plate=box(g,w,.045,d,x,.064,0,m);plate.castShadow=false;
  for(const a of [-1,1])for(const b of [-1,1])sphere(g,.047,x+a*(w/2-.13),.09,b*(d/2-.13),BRASS);
@@ -162,7 +167,7 @@ function makeTraps(g){
   box(g,.20,.15,.18,12.86,1.24,z+Math.sign(z)*-.22,BRASS);
  }
  torch(g,-12.8,-5.0);torch(g,11.0,5.0,0xffc379);
- return {camera:new V(-2.0,8.2,20.3),target:new V(.8,.38,0),pulse:[]};
+ return {camera:new V(-11.8,4.35,12.0),target:new V(3.8,.72,0),pulse:[],fov:45};
 }
 function cocoon(g,x,z,size=1){
  const silk=M(0xcecab9,.98);const mat=M(0xeae5d9,.9,{transparent:true,opacity:.4});
@@ -207,7 +212,7 @@ function makeDeath(g){
  }
  // Cool backlight through the webbed rear wall plus a warm entry torch.
  const pulse=[torch(g,-9.4,-5.8,0xffb767),torch(g,7.9,-5.9,0x86b9cd)];
- return {camera:new V(-1.2,6.9,16.8),target:new V(1.0,.92,-.35),pulse};
+ return {camera:new V(-.8,5.1,13.0),target:new V(1.8,1.20,-.55),pulse,fov:46};
 }
 function makeGoblin(g){
  const w=22,d=15;cave(g,w,d,120);
@@ -261,50 +266,52 @@ function makeGoblin(g){
   const h=.75+(i%4)*.22,x=7.0+(i%4)*.30,z=1.9+Math.floor(i/4)*.42;
   const s=mesh(g,new THREE.ConeGeometry(.13,h,7),M(0x69675f),x,3.85-h/2,z);s.rotation.z=(i%2?.08:-.06);
  } const pulse=[torch(g,5.2,-3.8),torch(g,-7.0,4.5,0xff9b55)];
- return {camera:new V(1.6,5.9,14.0),target:new V(x,1.22,z),pulse};
+ return {camera:new V(2.6,3.8,10.6),target:new V(x,1.38,z),pulse,fov:44};
 }
 function makeStomp(g){
  const w=25,d=15;cave(g,w,d,210);
- const foot=M(0x735c47),nail=M(0x9f8b73);
- // Environmental evidence, not a carpet of tiny feet: several enormous,
- // overlapping impressions lead toward the suspended threat.
- for(let i=0;i<18;i++){
-  const x=(rand(i+12)-.5)*w*.70,z=-5.6+i*.62+(rand(i+36)-.5)*.8,s=.48+rand(i+56)*.30;
-  const p=sphere(g,s,x,.045,z,foot);p.scale.set(.78,.18,1.48);p.rotation.y=(rand(i+100)-.5)*.5;
-  for(let toe=0;toe<4;toe++)sphere(g,s*.22,x+(toe-1.5)*s*.30,.055,z+s*.90,nail);
+ const flesh=M(0x8a7563,.98),nail=M(0xb2a28c,.86),dead=M(0x5f554b,.98);
+ // Source: hundreds of rotting severed bare humanoid feet, with no blood.
+ // Dozens of individually varied foreground feet imply the much larger count
+ // without turning the scene into an expensive pile of hundreds of meshes.
+ for(let i=0;i<54;i++){
+  const x=(rand(i+12)-.5)*w*.78,z=(rand(i+36)-.5)*d*.72,s=.15+rand(i+56)*.10;
+  const mat=i%5===0?dead:flesh;
+  const p=sphere(g,s,x,.10,z,mat,1);p.scale.set(.82,.50,1.62);p.rotation.y=rand(i+100)*Math.PI*2;
+  for(let toe=0;toe<5;toe++){
+   const a=p.rotation.y,spread=(toe-2)*s*.30,forward=s*(1.25-Math.abs(toe-2)*.06);
+   const tx=x+Math.cos(a)*spread+Math.sin(a)*forward,tz=z-Math.sin(a)*spread+Math.cos(a)*forward;
+   const t=sphere(g,s*(.25-Math.abs(toe-2)*.018),tx,.105,tz,nail,1);t.scale.y=.48;
+  }
  }
- // Main stomp crater: cracked dark earth beneath the looming foot.
- const crater=cyl(g,3.1,3.5,.05,.2,.04,.15,M(0x242320),36);crater.castShadow=false;
- for(let i=0;i<14;i++){
-  const a=i/14*Math.PI*2,r=3.0+(i%3)*.24;
-  segment(g,[Math.cos(a)*1.1,.06,Math.sin(a)*1.1],[Math.cos(a)*r,.06,Math.sin(a)*r],.025,M(0x171716),5);
+ // Ten feet are animated in the encounter. A small central cluster is posed
+ // upright/active so the visual hints that some of the severed feet can move.
+ for(let i=0;i<10;i++){
+  const a=i/10*Math.PI*2,r=2.1+(i%2)*.55,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  const p=sphere(g,.24,x,.31,z,flesh,1);p.scale.set(.82,.58,1.65);p.rotation.x=-.42;p.rotation.y=-a;
  }
- // Suspended giant granite foot: clearly foot-shaped, much larger, and tilted
- // toward the party so the absurd danger reads immediately.
- const granite=M(0x66635e),toeStone=M(0x827d72);
- const sole=sphere(g,2.15,.2,4.35,-.1,granite,2);sole.scale.set(1.22,.38,1.72);sole.rotation.x=.10;sole.rotation.z=-.05;
- const heel=sphere(g,1.18,.2,4.28,-2.25,granite,2);heel.scale.set(1.03,.58,.90);
- for(let toe=0;toe<5;toe++){
-  const x=.2+(toe-2)*.82,size=toe===0?.90:toe===1?.79:.70-(toe-2)*.075;
-  const t=sphere(g,size,x,4.10,2.35-((toe-1.8)**2)*.11,toeStone,2);
-  t.scale.set(.67,.42,1.05);
+ // The Big Foot is a suspended GRANITE BLOCK, not a literal giant stone foot.
+ const granite=M(0x66635e,.98),edge=M(0x827d72,.94);
+ const block=box(g,5.7,1.15,4.1,.2,4.55,-.1,granite);block.rotation.y=.10;block.rotation.z=-.035;
+ for(const [x,z] of [[-2.55,-1.75],[2.55,-1.75],[-2.55,1.75],[2.55,1.75]]){
+  const chip=mesh(g,new THREE.DodecahedronGeometry(.42,0),edge,x+.2,4.38,z-.1);chip.scale.set(1.3,.7,1.0);
  }
- // Source detail: rune-graven footprints on north and south walls power
- // the Big Foot. Keep them symbolic/player-visible without exposing mechanics.
+ // Rune-graven footprint symbols on north and south walls.
  for(const side of [-1,1]){
-  const wallZ=side*(d/2-.08);
-  const sole=mesh(g,new THREE.CircleGeometry(.58,16),M(0x8f8067,.8,{emissive:0x3d2f1d,emissiveIntensity:.28}),0,1.42,wallZ);
+  const wallZ=side*(d/2-.10),rune=M(0xb19972,.66,{emissive:0x4f3920,emissiveIntensity:.42});
+  const sole=mesh(g,new THREE.CircleGeometry(.66,20),rune,0,1.42,wallZ);
   sole.scale.set(.72,1.28,1);sole.rotation.x=side*Math.PI/2;
   for(let toe=0;toe<5;toe++){
-   const t=mesh(g,new THREE.CircleGeometry(.13-(toe*.009),12),sole.material,(toe-2)*.19,2.05-Math.abs(toe-2)*.05,wallZ-side*.01);
+   const t=mesh(g,new THREE.CircleGeometry(.15-(toe*.010),14),rune,(toe-2)*.22,2.18-Math.abs(toe-2)*.06,wallZ-side*.01);
    t.rotation.x=side*Math.PI/2;
   }
- } // Heavy suspension rig disappearing upward into darkness.
- for(const [x,z] of [[-1.3,-1.3],[-1.25,1.1],[1.55,-1.25],[1.55,1.15]]){
-  segment(g,[x,4.75,z],[x*1.65,6.6,z*1.65],.11,DARK);
+ }
+ // Heavy suspension rig disappearing upward into darkness.
+ for(const [x,z] of [[-2.1,-1.4],[-2.0,1.3],[2.4,-1.4],[2.4,1.3]]){
+  segment(g,[x,5.05,z],[x*1.25,6.8,z*1.25],.12,DARK);
  }
  const pulse=[torch(g,-9.8,-4.6),torch(g,9.8,4.5)];
- return {camera:new V(-.4,7.1,17.0),target:new V(.2,2.15,.25),pulse};
+ return {camera:new V(-.6,5.8,13.2),target:new V(.2,2.1,.0),pulse,fov:46};
 }
 function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
  const waterMat=M(0x285249,.27,{metalness:.27,transparent:true,opacity:.9,emissive:0x082c25,emissiveIntensity:.5});
@@ -318,7 +325,7 @@ function makeTentacle(g){const w=21,d=15;floor(g,w,d);masonry(g,w,d,3.1);
  for(let i=0;i<7;i++){
   const x=-7.5+i*2.3;const drain=cyl(g,.33,.34,2,x,2.1,-d/2+.6,M(0x66635c));drain.rotation.z=Math.PI/2;
  }
- const pulse=[torch(g,-9,4),torch(g,9,4,0xa2f2b7)];return {camera:new V(-.5,8.7,17),target:new V(0,1.55,0),pulse};}
+ const pulse=[torch(g,-9,4),torch(g,9,4,0xa2f2b7)];return {camera:new V(-.5,7.4,15.2),target:new V(0,1.75,0),pulse,fov:47};}
 function makeDragon(g){
  const w=26,d=16;cave(g,w,d,313);
  // Dabshabah: a wounded young BRASS dragon. The silhouette must read as a
@@ -404,7 +411,7 @@ function makeDragon(g){
   const coin=sphere(g,.055,x,.07,z,BRASS,1);coin.scale.set(1.5,.25,1.0);
  }
  const pulse=[torch(g,-9.5,-5.6,0xff9f4d),torch(g,9.5,-4.8,0xffc873)];
- return {camera:new V(-1.0,6.4,17.2),target:new V(cx,1.45,cz+1.55),pulse};
+ return {camera:new V(-.7,4.7,11.8),target:new V(cx,1.62,cz+1.75),pulse,fov:43};
 }
 function makeShrine(g){const w=23,d=14;floor(g,w,d);masonry(g,w,d,3.9);
  const altar=box(g,5.1,1.2,3.3,0,.6,-1.4,M(0x69685e));
@@ -434,7 +441,7 @@ function makeShrine(g){const w=23,d=14;floor(g,w,d);masonry(g,w,d,3.9);
  // Gearwork maul/entropy guardian suspended over altar.
  const hub=sphere(g,.42,0,3.42,-1.4,guardian,2);
  for(let i=0;i<4;i++){const a=i*Math.PI/2;segment(g,[0,3.42,-1.4],[Math.cos(a)*2.15,3.15,-1.4+Math.sin(a)*2.15],.10,guardian,8);}
- box(g,.72,.34,.34,2.38,3.10,-1.4,guardian); const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.3,8.0,15.6),target:new V(0,1.28,-1),pulse,arcs};}
+ box(g,.72,.34,.34,2.38,3.10,-1.4,guardian); const pulse=[torch(g,-9,2,0xa891fa),torch(g,9,2,0xffb66c)];return {camera:new V(-.3,6.3,13.0),target:new V(0,1.45,-1.2),pulse,arcs,fov:47};}
 const BUILDERS={trials:makeTrials,traps:makeTraps,death:makeDeath,goblin:makeGoblin,stomp:makeStomp,tentacle:makeTentacle,dragon:makeDragon,shrine:makeShrine};
 export function createCinematicRoom(world,room){
  const root=new THREE.Group();root.name='Episode 1 / '+room;world.scene.add(root);
@@ -450,7 +457,7 @@ export function createCinematicRoom(world,room){
  const rim=new THREE.PointLight(hues[room]||0xb2b2ae,7,24,2);
  rim.position.set(config.target.x+3.2,4.6,config.target.z-5.4);root.add(rim);
  world.ambient.intensity=1.12;world.sun.intensity=1.72;world.fill.intensity=.58;
- world.camera.fov=51;world.camera.updateProjectionMatrix();
+ world.camera.fov=config.fov||51;world.camera.updateProjectionMatrix();
  // A director's establishing-to-reveal dolly. It begins farther back and
  // higher, then takes ~4.5 seconds to settle on the room's focal point.
  // The motion is time based, so screenshots and TV frames agree regardless
