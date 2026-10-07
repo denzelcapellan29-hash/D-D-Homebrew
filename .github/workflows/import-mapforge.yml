@@ -1,0 +1,38 @@
+name: Import MapForge application
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ci/archive/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unpack:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct verified source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ci/archive/part-00
+          cat ci/archive/part-* > /tmp/mapforge-source.zip
+          echo 'b408489ccc0afae22edb0b671434124339ddfa1c246f768fdf057af044dff67b  /tmp/mapforge-source.zip' | sha256sum -c -
+          unzip -tq /tmp/mapforge-source.zip >/dev/null
+          mkdir -p /tmp/mapforge-unpacked
+          unzip -q /tmp/mapforge-source.zip -d /tmp/mapforge-unpacked
+          test -f /tmp/mapforge-unpacked/mapforge-3d/index.html
+          cp -a /tmp/mapforge-unpacked/mapforge-3d/. ./
+      - name: Commit full application and remove transfer chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -qr ci/archive
+          git add -A
+          git commit -m 'Import complete MapForge v0.6 application and scene assets'
+          git push origin HEAD:main
