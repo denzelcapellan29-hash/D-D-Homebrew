@@ -151,6 +151,12 @@ export class TabletopWorld {
       this.scene.background.set('#171c1b');
       this.scene.fog.color.set('#171c1b');
       this.scene.fog.near=16;this.scene.fog.far=48;
+      // Connected-scene default is cinematic rather than showroom-bright.
+      // Local lanterns and rupture/cave practicals now do more of the visual work.
+      if(this.settings?.lighting==='tabletop'){
+        this.ambient.intensity=1.55;this.sun.intensity=2.25;this.fill.intensity=.68;
+        this.renderer.toneMappingExposure=1.22;
+      }
     }else{
       this.scene.fog.near=38;this.scene.fog.far=100;
     }
