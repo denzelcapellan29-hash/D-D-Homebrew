@@ -81,3 +81,10 @@ Areas **2: Trials**, **3: Traps**, and **5: Death** now render as animated-camer
 To use: open TV View, select Area 2, Area 3, or Area 5 in the Episode 1 Director panel, then press **Show on TV**. The camera automatically sweeps through the location. For an exact tactical reference, press **Show original 2D map**. **Blackout TV** and **Return to live 3D** still work. Other scenes remain as in v0.5. No setup or dependency changes are needed.
 
 The 3D scenes are TV-only presentation environments. They do not change editable Area 1 geometry or save data. All assets are bundled for offline use. JavaScript syntax checks passed. Automated browser rendering could not be completed because the test browser blocked localhost access; perform a five-minute local test before the session.
+
+### Episode 1 visual direction (v0.7)
+
+- New procedurally built scene presentations cover Areas 2, 3, 5, 6, 7, 8, 9 and 10; the existing Area 1 + warehouse connection remains explorable.
+- Source art remains a 2D reference; no source-page headings or GM trap labels are projected on 3D ground.
+- `docs/episode1-fidelity.md` records the three-pass source review and QA acceptance criteria.
+- Cinematic geometry is deliberately interpretive and not a full reconstruction of every encounter.
