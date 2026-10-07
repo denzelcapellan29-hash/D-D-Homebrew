@@ -43,8 +43,15 @@ jobs:
               stat=ImageStat.Stat(im)
               print(f.name, im.size, 'stddev:', [round(x,2) for x in stat.stddev])
               assert im.width >= 800 and im.height >= 450, f'{f} too small'
+              # Blackout is intentionally an entirely dark frame.
               if 'blackout' not in f.name:
                   assert max(stat.stddev) > 7, f'{f} appears blank/uniform'
+              if f.name == '02-director-first-person.png':
+                  crop=im.crop((650,180,1200,690))
+                  pixels=list(crop.getdata())
+                  white=sum(1 for r,g,b in pixels if min(r,g,b)>210)/len(pixels)
+                  print('Explore occlusion fraction:',round(white,3))
+                  assert white < .28, f'First-person view obstructed by a bright wall: {white:.0%}'
           PY
       - name: Upload QA screenshots and logs
         if: always()
@@ -60,16 +67,13 @@ jobs:
         run: |
           python -m pip install --quiet pillow
           mkdir -p qa-preview
-          python - <<'PY'
+          python - <<'PYCODE'
           from PIL import Image
           from pathlib import Path
           for p in sorted(Path('qa-artifacts').glob('*.png')):
-              try:
-                  with Image.open(p) as im:
-                      im.convert('RGB').resize((1200,675)).save(Path('qa-preview')/(p.stem+'.jpg'),quality=74,optimize=True)
-              except Exception as e:
-                  print('preview failure',p,e)
-          PY
+              with Image.open(p) as im:
+                  im.convert('RGB').resize((1200,675)).save(Path('qa-preview')/(p.stem+'.jpg'),quality=75,optimize=True)
+          PYCODE
           test ! -f qa-artifacts/results.json || cp qa-artifacts/results.json qa-preview/results.json
           test ! -f qa-artifacts/failure.txt || cp qa-artifacts/failure.txt qa-preview/failure.txt
       - name: Publish visual QA previews to GitHub
