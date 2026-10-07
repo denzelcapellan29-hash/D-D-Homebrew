@@ -1,4 +1,4 @@
-# MapForge 3D — v0.3
+# MapForge 3D — Episode 1 Cinematic v0.7
 
 A local, single-player 3D tabletop prototype. The ruined warehouse sits above Area 1: Rats, with a continuous rope descending through the west-wall fissure beside the debris chamber. The passage and human footprints continue north.
 
@@ -78,7 +78,7 @@ Keyboard while your focus is *not* in a field: left/right arrows change scenes, 
 
 Areas **2: Trials**, **3: Traps**, and **5: Death** now render as animated-camera Three.js dioramas on the HDMI TV view. They are visually reconstructed from the supplied area illustrations: four luminous pools and stone columns in Trials; copper pressure plates A–D in Traps; and a rocky, webbed cavern with cocoons and a giant spider in Death. These are scenic models, **not mechanically simulated encounters or one-to-one tactical 3D conversions**.
 
-To use: open TV View, select Area 2, Area 3, or Area 5 in the Episode 1 Director panel, then press **Show on TV**. The camera automatically sweeps through the location. For an exact tactical reference, press **Show original 2D map**. **Blackout TV** and **Return to live 3D** still work. Other scenes remain as in v0.5. No setup or dependency changes are needed.
+To use: open TV View, select Area 2, Area 3, or Area 5 in the Episode 1 Director panel, then press **Show on TV**. The camera automatically sweeps through the location. For an exact tactical reference, press **Show original 2D map**. **Blackout TV** and **Return to live 3D** still work. Areas 6–10 now have source-informed cinematic dioramas, with 2D fallback images only where supplied. No setup or dependency changes are needed.
 
 The 3D scenes are TV-only presentation environments. They do not change editable Area 1 geometry or save data. All assets are bundled for offline use. JavaScript syntax checks passed. Automated browser rendering could not be completed because the test browser blocked localhost access; perform a five-minute local test before the session.
 
