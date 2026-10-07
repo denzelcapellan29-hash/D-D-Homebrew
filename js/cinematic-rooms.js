@@ -290,12 +290,39 @@ export function createCinematicRoom(world,room){
  const config=build(root),save={background:world.scene.background.clone(),fog:world.scene.fog,ambient:world.ambient.intensity,sun:world.sun.intensity,fill:world.fill.intensity,fov:world.camera.fov};
  world.worldRoot.visible=false;world.gridRoot.visible=false;world.orbit.enabled=false;world.lantern.visible=false;
  world.scene.background=new THREE.Color('#121615');world.scene.fog=new THREE.FogExp2('#111713',.010);
- world.ambient.intensity=1.20;world.sun.intensity=1.8;world.fill.intensity=.65;world.camera.fov=54;world.camera.updateProjectionMatrix();
- let elapsed=0,stopped=false;function tick(){if(stopped)return;elapsed+=.016;const t=elapsed*.15;
-  const base=config.camera,tar=config.target;
-  world.camera.position.set(base.x+Math.sin(t)*.85,base.y+Math.sin(t*.7)*.18,base.z+Math.cos(t)*.65);
-  world.camera.lookAt(tar.x+Math.sin(t*.7)*.15,tar.y,tar.z);
-  for(let i=0;i<config.pulse.length;i++)config.pulse[i].intensity=11+Math.sin(elapsed*1.27+i*.8)*1.55;
+ // Practical, motivated cinematic lighting: a low-intensity rim from the
+ // room's deepest edge separates the focal subject from the cave silhouette.
+ // These lights belong to the disposable room group, never to the base map.
+ const hues={trials:0x809adf,traps:0xb3b6ba,death:0x79a9cf,goblin:0xe0a15b,
+  stomp:0x8aa4b3,tentacle:0x60bc9b,dragon:0xf4ba6e,shrine:0xa79af7};
+ const rim=new THREE.PointLight(hues[room]||0xb2b2ae,7,24,2);
+ rim.position.set(config.target.x+3.2,4.6,config.target.z-5.4);root.add(rim);
+ world.ambient.intensity=1.12;world.sun.intensity=1.72;world.fill.intensity=.58;
+ world.camera.fov=51;world.camera.updateProjectionMatrix();
+ // A director's establishing-to-reveal dolly. It begins farther back and
+ // higher, then takes ~4.5 seconds to settle on the room's focal point.
+ // The motion is time based, so screenshots and TV frames agree regardless
+ // of display refresh rate. A tiny post-reveal drift avoids a frozen frame.
+ const clock=new THREE.Clock(),opening=new V(config.camera.x-.9,config.camera.y+1.65,config.camera.z+3.2);
+ const startLook=config.target.clone().add(new V(-.8,-.4,-1.4));
+ let elapsed=0,stopped=false;
+ function tick(){
+  if(stopped)return;
+  elapsed+=Math.min(clock.getDelta(),.08);
+  const reveal=Math.min(1,elapsed/4.5),smooth=reveal*reveal*(3-2*reveal);
+  const t=Math.max(0,elapsed-4.5)*.13;
+  world.camera.position.copy(opening).lerp(config.camera,smooth);
+  world.camera.position.x+=Math.sin(t)*.48*smooth;
+  world.camera.position.y+=Math.sin(t*.7)*.09*smooth;
+  world.camera.position.z+=Math.cos(t)*.40*smooth;
+  const aim=startLook.clone().lerp(config.target,smooth);
+  aim.x+=Math.sin(t*.6)*.09*smooth;
+  world.camera.lookAt(aim);
+  for(let i=0;i<config.pulse.length;i++){
+   const light=config.pulse[i];
+   light.intensity=(11+Math.sin(elapsed*1.27+i*.8)*1.2);
+  }
+  rim.intensity=6.4+Math.sin(elapsed*.55)*.55;
   if(config.arcs)for(let i=0;i<config.arcs.length;i++)config.arcs[i].rotation.z=elapsed*(i%2?.07:-.06);
   requestAnimationFrame(tick);
  }tick();
