@@ -25,9 +25,14 @@ async function run(){
  assert.ok(await dm.locator('#viewport canvas').count(),'WebGL canvas missing');
  assert.ok(await dm.locator('#viewport canvas').evaluate(c=>!!c.getContext('webgl2')||!!c.getContext('webgl')),'WebGL context unavailable');
  await nap(1500);await shot(dm,'01-director-orbit');
+ // v0.8 immersion acceptance: capture the warehouse rupture in its own orbit
+ // composition, then verify Explore sightlines in both connected levels.
+ await dm.locator('#viewWarehouse').click();await nap(900);await shot(dm,'01b-warehouse-rupture-orbit');
  await dm.locator('#walkMode').click();await nap(900);
  assert.equal(await dm.locator('#walkMode').getAttribute('aria-pressed'),'true','Explore mode not selected');
- await shot(dm,'02-director-first-person');
+ await shot(dm,'01c-warehouse-first-person');
+ await dm.locator('#orbitMode').click();await dm.locator('#viewArea1').click();await nap(650);
+ await dm.locator('#walkMode').click();await nap(900);await shot(dm,'02-director-first-person');
  await dm.locator('#orbitMode').click();await nap(500);
  const tv=await context.newPage();observe(tv,'tv');
  await tv.goto(`http://127.0.0.1:${port}/tv.html`,{waitUntil:'domcontentloaded'});
