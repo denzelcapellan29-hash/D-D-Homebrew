@@ -93,6 +93,25 @@ export function buildConnection(world,c) {
   floor.name='Warehouse floor torn open by magical rupture';floor.rotation.x=-Math.PI/2;
   floor.position.set(c.x,c.depth-.12,c.z);floor.receiveShadow=true;upper.add(floor);
 
+  // The opening must read as depth from the warehouse, not as a pale floor patch.
+  // Place a dark polygon just below the broken floor, matching the exact rupture
+  // silhouette, then ring it with a short fractured inner wall.
+  const mouthShape=new THREE.Shape();
+  rupture.forEach(([x,z],i)=>{if(i===0)mouthShape.moveTo(x,z);else mouthShape.lineTo(x,z);});mouthShape.closePath();
+  const mouthMat=new THREE.MeshBasicMaterial({color:0x070a0b,side:THREE.DoubleSide});
+  const mouth=new THREE.Mesh(new THREE.ShapeGeometry(mouthShape),mouthMat);
+  mouth.name='Deep black fissure mouth';mouth.rotation.x=-Math.PI/2;
+  mouth.position.set(c.x,c.depth-.32,c.z);upper.add(mouth);
+  const lipVerts=[];
+  for(let i=0;i<rupture.length;i++){
+    const a=rupture[i],b=rupture[(i+1)%rupture.length],dropA=.42+.10*Math.sin(i*1.7),dropB=.42+.10*Math.sin((i+1)*1.7);
+    const qa=[a[0],-.02,a[1]],qb=[b[0],-.02,b[1]],qc=[b[0]*.92,-dropB,b[1]*.92],qd=[a[0]*.92,-dropA,a[1]*.92];
+    for(const q of [qa,qb,qc,qa,qc,qd])lipVerts.push(q[0]+c.x,q[1]+c.depth-.12,q[2]+c.z);
+  }
+  const lipGeo=new THREE.BufferGeometry();lipGeo.setAttribute('position',new THREE.Float32BufferAttribute(lipVerts,3));lipGeo.computeVertexNormals();
+  const lipMat=new THREE.MeshStandardMaterial({color:0x3c3934,roughness:1,side:THREE.DoubleSide});
+  const innerLip=new THREE.Mesh(lipGeo,lipMat);innerLip.name='Fractured inner fissure wall';innerLip.castShadow=true;innerLip.receiveShadow=true;upper.add(innerLip);
+
   // Plank seams stop at a deliberately generous rupture envelope so no clean
   // circular pattern survives around the opening.
   for(let z=-c.halfH+.22;z<c.halfH;z+=.38){
@@ -122,7 +141,7 @@ export function buildConnection(world,c) {
 
   // Slumped floor plates make the failure read as structural collapse rather
   // than a decorative aperture.
-  for(let i=0;i<7;i++){
+  for(let i=0;i<4;i++){
     const a=i/11*Math.PI*2+.17,rad=c.r*(1.05+(i%3)*.10);
     const slab=box(upper,'Dropped warehouse floor slab',c.x+Math.cos(a)*rad,c.depth-.03-(i%4)*.05,
       c.z+Math.sin(a)*rad,.55+(i%3)*.18,.08,.42+(i%2)*.20,wood);
@@ -164,9 +183,6 @@ export function buildConnection(world,c) {
   shaftWall.name='Artifact-torn chasm walls';shaftWall.castShadow=true;shaftWall.receiveShadow=true;shaft.add(shaftWall);
   const abyssGlow=new THREE.PointLight(0x415866,3.6,9,2);
   abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
-  const depthMat=new THREE.MeshBasicMaterial({color:0x090d0f,transparent:true,opacity:.82,side:THREE.DoubleSide});
-  const depthCue=new THREE.Mesh(new THREE.CircleGeometry(c.r*1.18,40),depthMat);
-  depthCue.rotation.x=-Math.PI/2;depthCue.position.set(c.x,c.depth*.34,c.z);depthCue.name='Deep fissure darkness';shaft.add(depthCue);
   const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
   landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
   landing.name='Rope landing at Area 1';landing.receiveShadow=true;root.add(landing);
@@ -187,8 +203,8 @@ export function buildConnection(world,c) {
   coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';root.add(coil);
   // Splintered floor structure around the tear; wood, not a decorative ring
   // of rocks, is the dominant edge language inside the warehouse.
-  for(let i=0;i<7;i++){
-    const idx=(i*2)%rupture.length,[rx,rz]=rupture[idx],a=Math.atan2(rz,rx);
+  for(let i=0;i<4;i++){
+    const idx=(i*3)%rupture.length,[rx,rz]=rupture[idx],a=Math.atan2(rz,rx);
     const plank=box(upper,'Splintered rupture joist',c.x+rx*1.03,c.depth+.015,c.z+rz*1.03,.10,.08,.46+(i%3)*.13,darkWood);
     plank.rotation.y=-a+(i%2?.18:-.14);plank.rotation.z=(i%3-1)*.055;
   }
@@ -197,7 +213,7 @@ export function buildConnection(world,c) {
     box(upper,'Warehouse side masonry',c.x+side*c.halfW,c.depth+.78,c.z,.26,1.56,c.halfH*2,wallStone);
     box(upper,'Standing timber post',c.x+side*3.8,c.depth+1.9,c.z-2.8,.23,3.8,.23,darkWood);
   }
-  box(upper,'Warehouse back wall',c.x,c.depth+1.0,c.z-c.halfH,c.halfW*2,2,.26,wallStone);
+  box(upper,'Warehouse back wall',c.x,c.depth+.88,c.z-c.halfH,c.halfW*2,1.76,.26,wallStone);
   box(upper,'Exposed roof crossbeam',c.x,c.depth+3.65,c.z-2.8,8.1,.22,.25,darkWood);
   // Readable half-collapsed gable: two broad surviving rear planes plus a
   // single broken front remnant. Fewer, larger masses read as a damaged roof
@@ -239,6 +255,11 @@ export function buildConnection(world,c) {
     const plank=box(upper,'Fallen timber',c.x+2.05+(i%2)*.58,c.depth+.07,c.z+.92+Math.floor(i/2)*.62,.15,.09,.9,darkWood);
     plank.rotation.y=.45+i*.87;
   }
+  const foundationMat=new THREE.MeshStandardMaterial({color:0x454842,roughness:1});
+  for(const side of [-1,1])box(upper,'Warehouse stone foundation side',c.x+side*(c.halfW+.18),c.depth-.55,c.z,.42,1.05,c.halfH*2+.8,foundationMat);
+  box(upper,'Warehouse stone foundation front',c.x,c.depth-.55,c.z+c.halfH+.18,c.halfW*2+.8,1.05,.42,foundationMat);
+  box(upper,'Warehouse stone foundation rear',c.x,c.depth-.55,c.z-c.halfH-.18,c.halfW*2+.8,1.05,.42,foundationMat);
+
   // Waterdeep context: continuous cobbles and distant roofline masses. Keep
   // the context below the warehouse silhouette so it supports the shot instead
   // of competing with it.
