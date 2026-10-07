@@ -18,12 +18,13 @@ function setPresentation(scene){
  presentation.replaceChildren();presentation.classList.remove('blackout');
  if(scene?.type!=='room3d')leaveRoom();
  presentation.classList.toggle('reveal',scene?.type==='reveal');
+ presentation.classList.toggle('focus',scene?.type==='focus');
  if(scene?.type==='room3d'){presentationMode='room3d';presentation.style.display='none';status.hidden=true;enterRoom(scene);return;}
  pendingRoom=null;
  if(!scene||scene.type==='live'){presentationMode='live';presentation.style.display='none';return;}
  presentationMode=scene.type;presentation.style.display='block';status.hidden=true;
  if(scene.type==='blackout'){presentation.classList.add('blackout');return;}
- if(scene.type==='image'||scene.type==='reveal'){const img=new Image();img.alt=scene.name||'Episode scene';img.src=scene.src;presentation.append(img);return;}
+ if(scene.type==='image'||scene.type==='reveal'||scene.type==='focus'){const img=new Image();img.alt=scene.name||'Episode scene';img.src=scene.src;presentation.append(img);return;}
  const card=document.createElement('div');card.id='cinemaCard';const title=document.createElement('h1');title.textContent=scene.name||'';const caption=document.createElement('p');caption.textContent=scene.caption||'';card.append(title,caption);presentation.append(card);
 }
 
