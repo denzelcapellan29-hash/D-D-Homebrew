@@ -155,7 +155,7 @@ export class TabletopWorld {
       this.scene.fog.near=38;this.scene.fog.far=100;
     }
     const oldSelection=this.selectedTokenId;const oldLevel=this.activeLevel;
-    this.connectionMeshes=null;this.caveCeiling=null;this.climbing=null;this.tokenTransit=null;this.activeLevel=this.connection&&oldLevel==='warehouse'?'warehouse':'area1';
+    this.connectionMeshes=null;this.caveCeiling=null;this.caveCeilingDecor=null;this.climbing=null;this.tokenTransit=null;this.activeLevel=this.connection&&oldLevel==='warehouse'?'warehouse':'area1';
     release(this.gridRoot);release(this.worldRoot);
     this.tokenRoot=new THREE.Group();this.tokenRoot.name='Miniatures';
     this.worldRoot.add(this.tokenRoot);this.tokens=[];this.nextTokenId=1;
@@ -332,8 +332,8 @@ export class TabletopWorld {
     const earth=stoneMaterial(this.surfaces,{color:0x4a4137,roughness:1});
     const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
     const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
-    const ceilingMat=stoneMaterial(this.surfaces,{color:0x454239,roughness:1});
-    ceilingMat.side=THREE.DoubleSide;ceilingMat.emissive=new THREE.Color(0x10100e);ceilingMat.emissiveIntensity=.42;
+    const ceilingTex=this.surfaces.stone.clone();ceilingTex.needsUpdate=true;ceilingTex.wrapS=ceilingTex.wrapT=THREE.RepeatWrapping;ceilingTex.repeat.set(6,9);ceilingTex.userData.shared=false;
+    const ceilingMat=new THREE.MeshBasicMaterial({color:0x514c42,map:ceilingTex,side:THREE.DoubleSide});
 
     const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
     bed.rotation.x=-Math.PI/2;bed.position.y=-.10;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
@@ -397,6 +397,14 @@ export class TabletopWorld {
     const ceiling=new THREE.Mesh(ceilingGeo,ceilingMat);
     ceiling.rotation.x=Math.PI/2;ceiling.position.y=2.95;ceiling.name='Area 1 cave ceiling';
     ceiling.receiveShadow=true;ceiling.visible=false;shell.add(ceiling);this.caveCeiling=ceiling;
+    const stalMat=stoneMaterial(this.surfaces,{color:0x343630,roughness:1});
+    this.caveCeilingDecor=new THREE.Group();this.caveCeilingDecor.name='Area 1 ceiling formations';this.caveCeilingDecor.visible=false;shell.add(this.caveCeilingDecor);
+    for(let i=0;i<9;i++){
+      const p=this.mapToWorld(.34+(i%3)*.15,.18+Math.floor(i/3)*.25);
+      const h=.42+(i%4)*.13;
+      const s=new THREE.Mesh(new THREE.ConeGeometry(.12+(i%3)*.035,h,7),stalMat);
+      s.position.set(p.x,2.92-h*.5,p.z);s.rotation.z=(i%2?1:-1)*.08;s.name='Cave stalactite';this.caveCeilingDecor.add(s);
+    }
 
     // Motivated cave lighting: warm spill near the rope landing and a very dim
     // cool bounce deeper north. This keeps the ceiling and wall silhouette visible
@@ -497,7 +505,7 @@ export class TabletopWorld {
   focusLevel(level){
     if(level==='warehouse'&&!this.connection){this.toast('Load the connected demo first.');return;}
     this.climbing=null;this.activeLevel=level;
-    this.setCutaway(level==='area1');if(this.caveCeiling)this.caveCeiling.visible=this.walkMode&&level==='area1';this._buildGrid();
+    this.setCutaway(level==='area1');if(this.caveCeiling)this.caveCeiling.visible=this.walkMode&&level==='area1';if(this.caveCeilingDecor)this.caveCeilingDecor.visible=this.walkMode&&level==='area1';this._buildGrid();
     if(this.walkMode){
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
@@ -537,6 +545,7 @@ export class TabletopWorld {
   switchMode(isWalk){
     this.climbing=null;this.walkMode=isWalk;this.orbit.enabled=!isWalk;this.keys.clear();this.walkButtons.clear();
     if(this.caveCeiling)this.caveCeiling.visible=isWalk&&this.activeLevel==='area1';
+    if(this.caveCeilingDecor)this.caveCeilingDecor.visible=isWalk&&this.activeLevel==='area1';
     if(isWalk){const p=this.activeLevel==='warehouse'&&this.connection?this.upperSpawn():this.connection?.landing||this.spawn;this._placeExploreCamera(p);}
     else this.recenter();
   }
