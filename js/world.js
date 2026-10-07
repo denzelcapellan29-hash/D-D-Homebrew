@@ -330,12 +330,13 @@ export class TabletopWorld {
     // isolated procedural boulders or tube-like walls.
     const shell=new THREE.Group();shell.name='Area 1 cinematic cave shell';
     const earth=stoneMaterial(this.surfaces,{color:0x4a4137,roughness:1});
+    const outerEarth=stoneMaterial(this.surfaces,{color:0x252925,roughness:1});
     const wallMat=stoneMaterial(this.surfaces,{color:0x3b3c37,roughness:1});
     const shoulderMat=stoneMaterial(this.surfaces,{color:0x2e332f,roughness:1});
     const ceilingTex=this.surfaces.stone.clone();ceilingTex.needsUpdate=true;ceilingTex.wrapS=ceilingTex.wrapT=THREE.RepeatWrapping;ceilingTex.repeat.set(6,9);ceilingTex.userData.shared=false;
     const ceilingMat=new THREE.MeshBasicMaterial({color:0x403d36,map:ceilingTex,side:THREE.DoubleSide});
 
-    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),earth);
+    const bed=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW+16,this.worldH+18),outerEarth);
     bed.rotation.x=-Math.PI/2;bed.position.y=-.10;bed.receiveShadow=true;bed.name='Continuous cave earth bed';shell.add(bed);
 
     const profile=[
@@ -510,7 +511,7 @@ export class TabletopWorld {
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
     }else if(this.connection&&level==='warehouse'){
-      const c=this.connection;this.orbit.target.set(c.x,c.depth+.06,c.z+.22);this.camera.position.set(c.x+6.7,c.depth+3.7,c.z+8.1);this.orbit.update();
+      const c=this.connection;this.orbit.target.set(c.x,c.depth+.06,c.z+.22);this.camera.position.set(c.x+6.7,c.depth+3.7,c.z+8.1);this.camera.fov=51;this.camera.updateProjectionMatrix();this.orbit.update();
     }else this.recenter();
   }
   upperSpawn(){const c=this.connection;return {x:c.x+.62,z:c.z+3.02};}
@@ -537,8 +538,9 @@ export class TabletopWorld {
     if(this.connection&&this.activeLevel==='warehouse'){this.focusLevel('warehouse');return;}
     if(this.walkMode){const p=this.connection?.landing||this.spawn;this._placeExploreCamera(p);}
     else{
-      this.orbit.target.set(0,.22,-dim*.08);
-      this.camera.position.set(dim*.24,dim*.23,dim*.30);
+      this.orbit.target.set(0,.30,-dim*.11);
+      this.camera.position.set(dim*.20,dim*.17,dim*.235);
+      this.camera.fov=49;this.camera.updateProjectionMatrix();
       this.orbit.update();
     }
   }
