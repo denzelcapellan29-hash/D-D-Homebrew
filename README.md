@@ -1,5 +1,7 @@
 # MapForge 3D — Episode 1 Cinematic v0.7
 
+> **Project operating standard:** see [docs/PROJECT_INSTRUCTIONS.md](docs/PROJECT_INSTRUCTIONS.md). It defines the cinematic direction, source-fidelity rules, mandatory manual visual-QA gate, Warehouse/Area 1 standing direction, camera standards, and release discipline.
+
 A local, single-player 3D tabletop prototype. The ruined warehouse sits above Area 1: Rats, with a continuous rope descending through the west-wall fissure beside the debris chamber. The passage and human footprints continue north.
 
 ## Start on Windows
