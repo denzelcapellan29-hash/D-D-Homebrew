@@ -6,7 +6,12 @@
   "scenes": [
     "trials",
     "traps",
-    "death"
+    "death",
+    "goblin",
+    "stomp",
+    "tentacle",
+    "dragon",
+    "shrine"
   ],
   "errors": []
 }
