@@ -416,8 +416,8 @@ export class TabletopWorld {
     for(const side of [-1,1])for(let i=0;i<7;i++){
       const z=north.z-1.0-i*1.45;
       const wall=new THREE.Mesh(throatGeo,crownMat);
-      wall.position.set(north.x+side*(1.55-i*.045),.95,z);
-      wall.scale.set(1.35,1.28,1.6);wall.rotation.set(.06*Math.sin(i),i*.63,.10*side);
+      wall.position.set(north.x+side*(1.72-i*.025),.88,z);
+      wall.scale.set(.88,1.12,1.28);wall.rotation.set(.05*Math.sin(i),i*.63,.08*side);
       wall.castShadow=true;wall.receiveShadow=true;wall.name='Deep tunnel rock mass';shell.add(wall);
     }
 
