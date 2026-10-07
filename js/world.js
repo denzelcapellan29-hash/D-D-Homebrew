@@ -133,11 +133,23 @@ export class TabletopWorld {
     mode=mode==='torchlit'?'torchlit':'tabletop';
     this.settings??={lantern:true};this.settings.lighting=mode;
     if(!this.ambient)return;
-    const dark=mode==='torchlit';
-    this.ambient.intensity=dark?.48:2.4;this.sun.intensity=dark?.65:3.1;this.fill.intensity=dark?.35:1.0;
-    this.renderer.toneMappingExposure=dark?1.35:1.28;
-    this.scene.background.set(dark?'#10171b':'#242b2a');
-    this.scene.fog.color.copy(this.scene.background);
+    const dark=mode==='torchlit',connected=!!this.connection;
+    if(connected){
+      const above=this.activeLevel==='warehouse';
+      this.ambient.intensity=dark?.42:(above?1.58:1.26);
+      this.sun.intensity=dark?.58:(above?2.35:1.72);
+      this.fill.intensity=dark?.28:(above?.72:.52);
+      this.renderer.toneMappingExposure=dark?1.30:(above?1.22:1.18);
+      this.scene.background.set(above?(dark?'#151b1e':'#30393b'):(dark?'#080c0d':'#111715'));
+      this.scene.fog.color.copy(this.scene.background);
+      this.scene.fog.near=above?18:13;this.scene.fog.far=above?58:42;
+    }else{
+      this.ambient.intensity=dark?.48:2.4;this.sun.intensity=dark?.65:3.1;this.fill.intensity=dark?.35:1.0;
+      this.renderer.toneMappingExposure=dark?1.35:1.28;
+      this.scene.background.set(dark?'#10171b':'#242b2a');
+      this.scene.fog.color.copy(this.scene.background);
+      this.scene.fog.near=38;this.scene.fog.far=100;
+    }
   }
   setLantern(enabled){this.settings??={lighting:'tabletop'};this.settings.lantern=!!enabled;}
   build(image,analysis,rockFeet=10,savedTokens=[],connectionOptions={enabled:false,depthFeet:60}){
@@ -148,15 +160,7 @@ export class TabletopWorld {
     this.connectionOptions={enabled:!!connectionOptions.enabled,depthFeet:clamp(Number(connectionOptions.depthFeet)||60,20,150)};
     this.connection=this.connectionOptions.enabled?connectionLayout(this,this.connectionOptions.depthFeet):null;
     if(this.connection){
-      this.scene.background.set('#171c1b');
-      this.scene.fog.color.set('#171c1b');
-      this.scene.fog.near=16;this.scene.fog.far=48;
-      // Connected-scene default is cinematic rather than showroom-bright.
-      // Local lanterns and rupture/cave practicals now do more of the visual work.
-      if(this.settings?.lighting==='tabletop'){
-        this.ambient.intensity=1.55;this.sun.intensity=2.25;this.fill.intensity=.68;
-        this.renderer.toneMappingExposure=1.22;
-      }
+      this.scene.fog.near=13;this.scene.fog.far=48;
     }else{
       this.scene.fog.near=38;this.scene.fog.far=100;
     }
@@ -180,6 +184,7 @@ export class TabletopWorld {
     // Show only the active connected level by default; "View both levels" remains
     // available as a deliberate technical overview instead of the opening view.
     this.setCutaway(this.connection&&this.activeLevel==='area1');
+    this.setLighting(this.settings?.lighting||'tabletop');
     this.recenter();
   }
   _buildGround(){
@@ -536,7 +541,8 @@ export class TabletopWorld {
   focusLevel(level){
     if(level==='warehouse'&&!this.connection){this.toast('Load the connected demo first.');return;}
     this.climbing=null;this.activeLevel=level;
-    this.setCutaway(level==='area1');if(this.caveCeiling)this.caveCeiling.visible=this.walkMode&&level==='area1';if(this.caveCeilingDecor)this.caveCeilingDecor.visible=this.walkMode&&level==='area1';this._buildGrid();
+    this.setCutaway(level==='area1');if(this.caveCeiling)this.caveCeiling.visible=this.walkMode&&level==='area1';if(this.caveCeilingDecor)this.caveCeilingDecor.visible=this.walkMode&&level==='area1';
+    this.setLighting(this.settings?.lighting||'tabletop');this._buildGrid();
     if(this.walkMode){
       const p=level==='warehouse'?this.upperSpawn():this.connection?.landing||this.spawn;
       this._placeExploreCamera(p);
@@ -644,7 +650,7 @@ export class TabletopWorld {
       const c=this.connection,a=this.connectionMeshes.anchor;
       this.camera.position.copy(sampleRopePath(t.from,t.to,a,f));
       this._applyWalkRotation();
-      if(f>=1){this.activeLevel=t.next;this.climbing=null;this.setCutaway(t.next==='area1');this._buildGrid();this.toast(t.next==='area1'?'Arrived in Area 1. The passage leads north.':'Arrived at the warehouse fissure.');}
+      if(f>=1){this.activeLevel=t.next;this.climbing=null;this.setCutaway(t.next==='area1');this.setLighting(this.settings?.lighting||'tabletop');this._buildGrid();this.toast(t.next==='area1'?'Arrived in Area 1. The passage leads north.':'Arrived at the warehouse fissure.');}
     }else if(this.walkMode){
       const forward=(this.keys.has('KeyW')||this.keys.has('ArrowUp')||this.walkButtons.has('forward')?1:0)-(this.keys.has('KeyS')||this.keys.has('ArrowDown')||this.walkButtons.has('back')?1:0);
       const side=(this.keys.has('KeyD')||this.keys.has('ArrowRight')||this.walkButtons.has('right')?1:0)-(this.keys.has('KeyA')||this.keys.has('ArrowLeft')||this.walkButtons.has('left')?1:0);
