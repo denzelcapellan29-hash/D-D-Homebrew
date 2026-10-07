@@ -94,6 +94,45 @@ export function buildConnection(world,c) {
     const roof=box(upper,'Remaining red tile roof',c.x+side*2.7,c.depth+3.2,c.z-3.0,3.3,.09,1.25,tile);
     roof.rotation.z=-side*.27;
   }
+  // Fragmented gabled roof matching the ruined-warehouse reference:
+  // a red tile roof persists across the rear, with visible broken rafters.
+  // The foreground is removed as a cutaway so TV guests can see the hole.
+  const redTiles=[0xa7553b,0x82412c,0xb66542,0x723a2a].map(color=>
+    new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
+  const roofRand=n=>{const v=Math.sin(n*197.91+41.75)*48153.39;return v-Math.floor(v);};
+  const pitch=.42;
+  for(const side of [-1,1]){
+    // Ridge-to-eave framing. Open slats remain where roof tiles broke away.
+    for(const z of [-2.9,-1.75,-.60]){
+      const beam=box(upper,'Exposed sloping timber rafter',c.x+side*2.0,c.depth+3.27,c.z+z,4.4,.17,.19,darkWood);
+      beam.rotation.z=-side*pitch;
+    }
+    for(let row=0;row<6;row++)for(let col=0;col<5;col++){
+      const seed=row*12+col+side*119;
+      if(roofRand(seed)>.83 || (row>3&&col<2&&roofRand(seed+45)>.39))continue;
+      const localX=side*(.47+row*.68),localZ=-3.4+col*.58;
+      const h=4.13-Math.abs(localX)*.41;
+      const section=box(upper,'Broken red clay roof tile',c.x+localX,c.depth+h,c.z+localZ,.76,.085,.57,redTiles[(row+col)%4]);
+      section.rotation.z=-side*pitch;section.rotation.y=(roofRand(seed+1)-.5)*.025;
+    }
+  }
+  box(upper,'Weathered ridge beam',c.x,c.depth+4.03,c.z-2.12,.27,.30,3.9,darkWood);
+  // Collapsed chunks and fractured rafters at the cavern mouth.
+  for(let i=0;i<27;i++){
+    const angle=i*.71,rad=1.28+(i%5)*.20;
+    const x=c.x+Math.cos(angle)*rad,z=c.z+Math.sin(angle)*rad;
+    const r=.19+(i%4)*.12;
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),stone);
+    rock.position.set(x,c.depth+.16+r*.28,z);rock.rotation.set(angle,angle*.28,.23);rock.scale.set(1.2,.55,1.0);
+    rock.name='Broken limestone at warehouse collapse';upper.add(rock);
+  }
+  for(let i=0;i<9;i++){
+    const x=c.x+(roofRand(i+6)-.5)*6.4,z=c.z+(roofRand(i+19)-.5)*4.6;
+    if(inShaft(c,x,z,.19))continue;
+    const debris=box(upper,'Shattered floorboard',x,c.depth+.16,z,.15,.09,.7+roofRand(i+66)*.8,darkWood);
+    debris.rotation.y=roofRand(i+29)*Math.PI;
+    debris.rotation.x=(roofRand(i+46)-.5)*.21;
+  }
   for(let i=0;i<5;i++){
     const x=c.x-3.3+(i%2)*.9,z=c.z-2.5+Math.floor(i/2)*.65;
     box(upper,'Warehouse crate',x,c.depth+.32,z,.6,.64,.6,wood);
