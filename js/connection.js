@@ -200,10 +200,10 @@ export function buildConnection(world,c) {
   // Player-facing Area 1 cutaway needs a readable west-wall fissure without
   // adding freestanding "rock props". A dark irregular crevice sits in the wall
   // and the local rope tail emerges from it.
-  const mouthMat=new THREE.MeshBasicMaterial({color:0x090c0c,transparent:true,opacity:.92,side:THREE.DoubleSide,depthWrite:false});
-  const mouth=new THREE.Mesh(new THREE.CircleGeometry(.72,11),mouthMat);
-  mouth.position.set(c.x+.10,1.26,c.z);mouth.rotation.y=Math.PI/2;mouth.scale.set(1,.82,1.28);
-  mouth.name='Dark west-wall fissure mouth';root.add(mouth);
+  const entranceMouthMat=new THREE.MeshBasicMaterial({color:0x090c0c,transparent:true,opacity:.92,side:THREE.DoubleSide,depthWrite:false});
+  const entranceMouth=new THREE.Mesh(new THREE.CircleGeometry(.72,11),entranceMouthMat);
+  entranceMouth.position.set(c.x+.10,1.26,c.z);entranceMouth.rotation.y=Math.PI/2;entranceMouth.scale.set(1,.82,1.28);
+  entranceMouth.name='Dark west-wall fissure mouth';root.add(entranceMouth);
   // Rope remains visible in both level views and reaches the cave floor.
   const anchor={x:c.x-.52,z:c.z-.32};
   const beam=box(upper,'Rope anchor beam',c.x-.62,c.depth+.17,c.z-1.05,2.3,.24,.25,darkWood);
