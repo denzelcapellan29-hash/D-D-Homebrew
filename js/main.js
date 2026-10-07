@@ -11,6 +11,15 @@ const cinema=new BroadcastChannel('mapforge-cinema-v1');
 let cinemaOpen=false;
 let selectedEpisodeScene=0;
 let presentationScene={type:'live'};
+let revealManifest={};
+async function loadRevealManifest(){
+ try{
+  const r=await fetch('./assets/cinema/manifest.json',{cache:'no-store'});
+  if(!r.ok)return;
+  const data=await r.json();
+  revealManifest=data?.scenes||{};
+ }catch{}
+}
 function sendPresentation(){if(cinemaOpen)cinema.postMessage({type:'presentation',scene:presentationScene});}
 function showEpisodeScene(idx){
  selectedEpisodeScene=Math.max(0,Math.min(episodeScenes.length-1,idx));
@@ -27,8 +36,9 @@ function prepareEpisodeScenes(){
  $('episodeShow').addEventListener('click',()=>showEpisodeScene(Number(select.value)));
  $('episodeReveal').addEventListener('click',()=>{
   const idx=Number(select.value),scene=episodeScenes[idx];
-  if(!scene.hero){notify('No cinematic reveal art is installed for this scene yet. Showing the live scene instead.');showEpisodeScene(idx);return;}
-  presentationScene={type:'image',name:scene.name,src:scene.hero};
+  const hero=revealManifest?.[scene.id]?.hero||scene.hero;
+  if(!hero){notify('No cinematic reveal art is installed for this scene yet. Showing the live scene instead.');showEpisodeScene(idx);return;}
+  presentationScene={type:'image',name:scene.name,src:hero};
   sendPresentation();$('episodeStatus').textContent='TV: cinematic reveal for '+scene.name;
  });
  $('episodeMap').addEventListener('click',()=>{const idx=Number(select.value),scene=episodeScenes[idx];if(!scene.src){notify('No original map is available for this scene.');return;}presentationScene={type:'image',name:scene.name,src:scene.src};sendPresentation();$('episodeStatus').textContent='TV: original battlemap for '+scene.name;});
@@ -351,6 +361,7 @@ function syncMiniatureUI(){
 async function init(){
   try{
     world=new TabletopWorld($('viewport'),notify);
+    await loadRevealManifest();
     setupEvents();prepareEpisodeScenes();updateReadouts();
     await loadMap('./assets/area-1-rats.png','area-1-rats.png',true);
     world.overview();
