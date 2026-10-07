@@ -35,7 +35,10 @@ async function run(){
  const indices=[['trials','04-trials-3d'],['traps','05-traps-3d'],['death','06-death-3d'],['goblin','09-goblin-3d'],['stomp','10-stomp-3d'],['tentacle','11-tentacle-3d'],['dragon','12-dragon-3d'],['shrine','13-shrine-3d']];
  for(const [id,name] of indices){
   await dm.locator('#episodeScene').selectOption({label:{trials:'Area 2 · Trials',traps:'Area 3 · Traps',death:'Area 5 · Death',goblin:'Area 6 · Goblin',stomp:'Area 7 · Stomp',tentacle:'Area 8 · Tentacle',dragon:'Area 9 · Dragon',shrine:'Area 10 · Shrine of Destruction'}[id]});
-  await dm.locator('#episodeShow').click();await nap(2700);
+  await dm.locator('#episodeShow').click();
+  // Two moments of the Trials camera cue: establishing and settled reveal.
+  if(id==='trials'){await nap(850);await shot(tv,'04-trials-establishing');await nap(5000);}
+  else await nap(2700);
   assert.equal(await tv.locator('#cinemaPresentation').evaluate(el=>getComputedStyle(el).display),'none',`${id} did not request 3D`);
   assert.ok(await tv.locator('#screen canvas').count(),`${id} canvas missing`);
   await shot(tv,name);
