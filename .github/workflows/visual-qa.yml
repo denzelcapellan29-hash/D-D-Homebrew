@@ -78,10 +78,14 @@ jobs:
         run: |
           git config user.name "mapforge-qa-bot"
           git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "A newer main commit exists; skip publishing stale preview frames."
+            exit 0
+          fi
           git add -f qa-preview
           git diff --cached --quiet && exit 0
           git commit -m "QA: refresh rendered previews [skip ci]"
-          git pull --rebase origin main
           git push
       - name: Upload QA screenshots, previews and logs
         if: always()
