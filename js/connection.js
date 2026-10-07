@@ -36,15 +36,14 @@ export function buildConnection(world,c) {
   shape.moveTo(-c.halfW,-c.halfH);shape.lineTo(c.halfW,-c.halfH);
   shape.lineTo(c.halfW,c.halfH);shape.lineTo(-c.halfW,c.halfH);shape.closePath();
   const hole=new THREE.Path();
-  const rupture=[];
-  for(let i=0;i<52;i++){
-    const a=-i/52*Math.PI*2;
-    const lobe=.18*Math.sin(i*1.73)+.11*Math.sin(i*3.91)+.07*Math.sin(i*.61);
-    const directional=.24*Math.max(0,Math.cos(a+.35))+.12*Math.max(0,Math.cos(a*2-1.1));
-    const r=c.r*(1.02+lobe+directional);
-    rupture.push([Math.cos(a)*r,Math.sin(a)*r]);
-  }
-  rupture.forEach(([x,z],i)=>{if(i===0)hole.moveTo(x,z);else hole.lineTo(x,z);});
+  // Uneven, diagonal tear with a pinched waist. It has no radial symmetry and
+  // therefore cannot read as a well, mine shaft, or deliberately cut opening.
+  const rupture=[
+    [-1.55,-.56],[-.92,-1.02],[-.18,-.82],[.55,-1.18],[1.48,-.78],
+    [1.12,-.18],[1.72,.27],[.78,.48],[1.12,1.08],[.18,.82],
+    [-.58,1.24],[-.72,.54],[-1.58,.24],[-1.12,-.15]
+  ];
+  rupture.forEach(([x,z],i)=>{x*=c.r;z*=c.r;if(i===0)hole.moveTo(x,z);else hole.lineTo(x,z);});
   hole.closePath();shape.holes.push(hole);
   const floor=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.12,bevelEnabled:false}),wood);
   floor.name='Warehouse floor torn open by magical rupture';floor.rotation.x=-Math.PI/2;
@@ -63,8 +62,8 @@ export function buildConnection(world,c) {
 
   // Branching artifact fractures: dark glassy seams with restrained arcane
   // emission, widening toward the central rupture.
-  const arcane=new THREE.MeshStandardMaterial({color:0x253b49,roughness:.62,metalness:.12,
-    emissive:0x355f7b,emissiveIntensity:.65});
+  const arcane=new THREE.MeshStandardMaterial({color:0x292728,roughness:.88,metalness:.05,
+    emissive:0x263642,emissiveIntensity:.18});
   const fracture=(angle,length,width,offset=0)=>{
     for(let j=0;j<4;j++){
       const t=(j+.5)/4,seg=length/4;
@@ -75,11 +74,11 @@ export function buildConnection(world,c) {
       crack.rotation.y=-angle-bend;
     }
   };
-  fracture(.18,2.45,.12,1);fracture(2.58,1.85,.10,2);fracture(-1.54,1.55,.09,3);fracture(-2.72,1.18,.08,4);
+  fracture(.18,1.85,.075,1);fracture(2.58,1.30,.065,2);fracture(-1.54,1.05,.06,3);
 
   // Slumped floor plates make the failure read as structural collapse rather
   // than a decorative aperture.
-  for(let i=0;i<11;i++){
+  for(let i=0;i<7;i++){
     const a=i/11*Math.PI*2+.17,rad=c.r*(1.05+(i%3)*.10);
     const slab=box(upper,'Dropped warehouse floor slab',c.x+Math.cos(a)*rad,c.depth-.03-(i%4)*.05,
       c.z+Math.sin(a)*rad,.55+(i%3)*.18,.08,.42+(i%2)*.20,wood);
@@ -100,7 +99,7 @@ export function buildConnection(world,c) {
     rock.rotation.set(shaftRand(i+1)*2.4,-a,shaftRand(i+5)*1.8);
     rock.castShadow=true;rock.receiveShadow=true;shaft.add(rock);
   }
-  const abyssGlow=new THREE.PointLight(0x4a7896,11,13,2);
+  const abyssGlow=new THREE.PointLight(0x425c6c,5.5,10,2);
   abyssGlow.position.set(c.x,c.depth*.18,c.z);shaft.add(abyssGlow);
   const landing=new THREE.Mesh(new THREE.CircleGeometry(c.r,40),stone);
   landing.rotation.x=-Math.PI/2;landing.position.set(c.x,.012,c.z);
@@ -120,8 +119,8 @@ export function buildConnection(world,c) {
   rope.name='Continuous rope from warehouse to Area 1';root.add(rope);
   const coil=new THREE.Mesh(new THREE.TorusGeometry(.17,.025,6,28),rope.material);
   coil.rotation.x=Math.PI/2;coil.position.set(anchor.x,.05,anchor.z);coil.name='Rope coil at landing';root.add(coil);
-  for(let i=0;i<29;i++){
-    const a=i/29*Math.PI*2+.11*Math.sin(i*1.9),rad=c.r*(1.03+(i%5)*.075);
+  for(let i=0;i<14;i++){
+    const a=i/14*Math.PI*2+.16*Math.sin(i*1.9),rad=c.r*(1.16+(i%4)*.10);
     const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.16+(i%4)*.065),stone);
     rock.position.set(c.x+Math.cos(a)*rad,c.depth+.02+(i%3)*.045,c.z+Math.sin(a)*rad);
     rock.scale.set(.8+(i%3)*.35,.35+(i%4)*.13,.75+(i%2)*.45);rock.rotation.set(i*.37,a,i*.19);
@@ -162,14 +161,15 @@ export function buildConnection(world,c) {
     }
   }
   box(upper,'Weathered ridge beam',c.x,c.depth+4.03,c.z-2.12,.27,.30,3.9,darkWood);
-  // Collapsed chunks and fractured rafters at the cavern mouth.
-  for(let i=0;i<27;i++){
-    const angle=i*.71,rad=1.28+(i%5)*.20;
+  // Sparse collapse debris keeps the tear legible instead of burying it under
+  // a procedural boulder heap.
+  for(let i=0;i<10;i++){
+    const angle=i*.91+.24,rad=1.60+(i%3)*.31;
     const x=c.x+Math.cos(angle)*rad,z=c.z+Math.sin(angle)*rad;
-    const r=.19+(i%4)*.12;
+    const r=.12+(i%3)*.08;
     const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),stone);
-    rock.position.set(x,c.depth+.16+r*.28,z);rock.rotation.set(angle,angle*.28,.23);rock.scale.set(1.2,.55,1.0);
-    rock.name='Broken limestone at warehouse collapse';upper.add(rock);
+    rock.position.set(x,c.depth+.08+r*.22,z);rock.rotation.set(angle,angle*.21,.18);
+    rock.scale.set(1.35,.45,.9);rock.name='Scattered collapse limestone';upper.add(rock);
   }
   for(let i=0;i<9;i++){
     const x=c.x+(roofRand(i+6)-.5)*6.4,z=c.z+(roofRand(i+19)-.5)*4.6;
@@ -187,33 +187,33 @@ export function buildConnection(world,c) {
     const plank=box(upper,'Fallen timber',c.x+1.65+(i%3)*.55,c.depth+.07,c.z+.7+Math.floor(i/3)*.55,.16,.1,1.1,darkWood);
     plank.rotation.y=i*.81;
   }
-  // Waterdeep context shell: enough real street and neighboring massing to stop
-  // the warehouse from reading as a floating set. It remains deliberately low
-  // detail because it is framing geometry, not an explorable city district.
-  const streetMat=new THREE.MeshStandardMaterial({color:0x6e6a62,roughness:1});
-  const plaster=new THREE.MeshStandardMaterial({color:0xa18d75,roughness:1});
-  const slate=new THREE.MeshStandardMaterial({color:0x4a4f55,roughness:.96});
-  box(upper,'Cobblestone street context',c.x,c.depth-.22,c.z+8.4,19,.34,10.5,streetMat);
+  // Waterdeep context: a textured street and distant, fog-muted silhouettes.
+  // Keep framing geometry beyond the warehouse rather than placing primitive
+  // boxes beside the camera where they read as unfinished models.
+  const streetMat=stoneMaterial(world.surfaces,{color:0x777169,roughness:1});
+  const silhouette=new THREE.MeshStandardMaterial({color:0x343a3a,roughness:1});
+  const roofSilhouette=new THREE.MeshStandardMaterial({color:0x292e30,roughness:1});
+  box(upper,'Waterdeep street ground',c.x,c.depth-.24,c.z+3.8,20,.34,17,streetMat);
+  // Rear district only: it sits behind the ruined warehouse from the hero angle.
+  for(let k=0;k<7;k++){
+    const x=c.x-9+k*3.0,h=2.4+(k%3)*.55,z=c.z-9.4-(k%2)*.45;
+    box(upper,'Distant Waterdeep facade',x,c.depth+h*.5,z,2.55,h,1.15,silhouette);
+    const roof=box(upper,'Distant Waterdeep roof',x,c.depth+h+.22,z,2.85,.22,1.45,roofSilhouette);
+    roof.rotation.z=(k%2?.11:-.11);
+  }
+  // Side masonry fragments imply neighboring construction without competing
+  // with the warehouse silhouette.
   for(const side of [-1,1]){
-    const bx=c.x+side*8.2;
-    box(upper,'Neighboring Waterdeep facade',bx,c.depth+1.65,c.z+5.2,4.4,3.7,2.4,plaster);
-    for(let k=0;k<3;k++)box(upper,'Neighboring timber frame',bx+side*(k-1)*.8,c.depth+1.7,c.z+3.96,.11,3.5,.12,darkWood);
-    const roof=box(upper,'Neighboring slate roof',bx,c.depth+3.72,c.z+5.2,4.8,.16,2.8,slate);
-    roof.rotation.z=-side*.18;
-    for(let k=0;k<3;k++)box(upper,'Street crate',c.x+side*(5.7+k*.55),c.depth+.28,c.z+5.2+(k%2)*.65,.5,.55,.5,wood);
+    box(upper,'Street edge masonry',c.x+side*7.4,c.depth+.42,c.z+1.8,1.6,.9,8.5,stone);
+    for(let k=0;k<3;k++)box(upper,'Street clutter',c.x+side*(5.6+k*.55),c.depth+.22,c.z+4.6+(k%2)*.55,.45,.44,.45,wood);
   }
-  // Distant facade silhouettes close the horizon without obscuring orbit view.
-  for(let k=0;k<5;k++){
-    const x=c.x-7.4+k*3.7;
-    box(upper,'Distant district mass',x,c.depth+1.15,c.z+11.6,3.1,2.7,1.3,k%2?plaster:stone);
-  }
-  // Dust plume and magical light make the fissure the visual cause of the ruin.
-  const glow=new THREE.PointLight(0x547f9f,18,10,2);glow.position.set(c.x,c.depth-.55,c.z);upper.add(glow);
-  for(let i=0;i<18;i++){
-    const dustMat=new THREE.MeshBasicMaterial({color:0xc7baa2,transparent:true,opacity:.07+(i%4)*.018,depthWrite:false});
-    const dust=new THREE.Mesh(new THREE.SphereGeometry(.12+(i%3)*.06,8,6),dustMat);
-    dust.name='Rising rupture dust';dust.position.set(c.x+(roofRand(i+71)-.5)*2.2,c.depth+.18+(i%6)*.31,c.z+(roofRand(i+91)-.5)*1.8);
-    dust.scale.set(.5,1.8,.5);upper.add(dust);
+  // Restrained magical light and dusty haze from the rupture.
+  const glow=new THREE.PointLight(0x49687d,7,8,2);glow.position.set(c.x,c.depth-.45,c.z);upper.add(glow);
+  for(let i=0;i<10;i++){
+    const dustMat=new THREE.MeshBasicMaterial({color:0xb7aa96,transparent:true,opacity:.045+(i%3)*.012,depthWrite:false});
+    const dust=new THREE.Mesh(new THREE.SphereGeometry(.10+(i%2)*.05,7,5),dustMat);
+    dust.name='Rising rupture dust';dust.position.set(c.x+(roofRand(i+71)-.5)*1.8,c.depth+.12+(i%5)*.29,c.z+(roofRand(i+91)-.5)*1.45);
+    dust.scale.set(.45,1.45,.45);upper.add(dust);
   }
 
   // Warning barrier across the open front of the damaged warehouse.
