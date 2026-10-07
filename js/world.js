@@ -535,7 +535,11 @@ export class TabletopWorld {
   }
   setCutaway(enabled){
     this.cutaway=!!enabled;
-    if(this.connectionMeshes){this.connectionMeshes.upper.visible=!this.cutaway;this.connectionMeshes.shaft.visible=!this.cutaway;}
+    if(this.connectionMeshes){
+      this.connectionMeshes.upper.visible=!this.cutaway;
+      this.connectionMeshes.shaft.visible=!this.cutaway;
+      if(this.connectionMeshes.area1Rope)this.connectionMeshes.area1Rope.visible=this.cutaway;
+    }
     for(const t of this.tokens)t.group.visible=this.tokenTransit?.token===t||!(this.cutaway&&t.level==='warehouse');
   }
   focusLevel(level){
