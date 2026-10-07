@@ -25,14 +25,14 @@ async function setPresentation(scene){
   const img=new Image();img.alt=scene.name||'Episode scene';img.decoding='async';img.src=scene.src;
   try{await img.decode();}catch(err){console.error('Presentation image:',err);return;}
   if(seq!==presentationSeq)return;
-  presentation.replaceChildren(img);presentation.classList.remove('blackout');
+  presentation.replaceChildren(img);presentation.classList.remove('blackout','departing');
   presentation.classList.toggle('reveal',scene.type==='reveal');
   presentation.classList.toggle('focus',scene.type==='focus');
   pendingRoom=null;presentationMode=scene.type;presentation.style.display='block';status.hidden=true;
   return;
  }
 
- presentation.replaceChildren();presentation.classList.remove('blackout','reveal','focus');
+ presentation.replaceChildren();presentation.classList.remove('blackout','reveal','focus','departing');
  if(scene?.type==='room3d'){
   presentationMode='room3d';status.hidden=true;enterRoom(scene);
   if(presentation.style.display!=='none'&&presentation.childNodes.length){
