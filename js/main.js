@@ -30,15 +30,23 @@ function showEpisodeScene(idx){
 }
 function prepareEpisodeScenes(){
  const select=$('episodeScene');
+ const syncEpisodeUI=()=>{
+  const scene=episodeScenes[Number(select.value)];
+  $('episodeNote').textContent=scene.note;
+  const hero=revealManifest?.[scene.id]?.hero||scene.hero;
+  $('episodeReveal').disabled=!hero;
+  $('episodeReveal').textContent=hero?'Cinematic Reveal':'Reveal not installed';
+  $('episodeReveal').title=hero?'Show the high-quality player-facing establishing shot.':'Install this scene\'s private cinema art pack to enable its reveal.';
+ };
  for(const [i,scene] of episodeScenes.entries()){const option=document.createElement('option');option.value=String(i);option.textContent=scene.name;select.append(option);}
- select.value='0';$('episodeNote').textContent=episodeScenes[0].note;
- select.addEventListener('change',()=>{$('episodeNote').textContent=episodeScenes[Number(select.value)].note;});
+ select.value='0';syncEpisodeUI();
+ select.addEventListener('change',syncEpisodeUI);
  $('episodeShow').addEventListener('click',()=>showEpisodeScene(Number(select.value)));
  $('episodeReveal').addEventListener('click',()=>{
   const idx=Number(select.value),scene=episodeScenes[idx];
   const hero=revealManifest?.[scene.id]?.hero||scene.hero;
   if(!hero){notify('No cinematic reveal art is installed for this scene yet. Showing the live scene instead.');showEpisodeScene(idx);return;}
-  presentationScene={type:'image',name:scene.name,src:hero};
+  presentationScene={type:'reveal',name:scene.name,src:hero};
   sendPresentation();$('episodeStatus').textContent='TV: cinematic reveal for '+scene.name;
  });
  $('episodeMap').addEventListener('click',()=>{const idx=Number(select.value),scene=episodeScenes[idx];if(!scene.src){notify('No original map is available for this scene.');return;}presentationScene={type:'image',name:scene.name,src:scene.src};sendPresentation();$('episodeStatus').textContent='TV: original battlemap for '+scene.name;});
@@ -51,6 +59,7 @@ function prepareEpisodeScenes(){
   if(e.key==='ArrowRight'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value)+1);}
   if(e.key==='ArrowLeft'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value)-1);}
   if(e.code==='Space'){e.preventDefault();showEpisodeScene(Number($('episodeScene').value));}
+  if(e.key.toLowerCase()==='r'&&!$('episodeReveal').disabled)$('episodeReveal').click();
   if(e.key.toLowerCase()==='b')$('episodeBlackout').click();
   if(e.key.toLowerCase()==='l')$('episodeLive').click();
  });
