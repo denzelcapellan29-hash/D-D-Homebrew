@@ -81,6 +81,7 @@ jobs:
           git add -f qa-preview
           git diff --cached --quiet && exit 0
           git commit -m "QA: refresh rendered previews [skip ci]"
+          git pull --rebase origin main
           git push
       - name: Upload QA screenshots, previews and logs
         if: always()
