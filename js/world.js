@@ -172,12 +172,23 @@ export class TabletopWorld {
     this.recenter();
   }
   _buildGround(){
-    const tex=new THREE.Texture(this.image);tex.needsUpdate=true;
-    tex.colorSpace=THREE.SRGBColorSpace;
-    tex.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
-    this.mapTexture=tex;
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW,this.worldH),new THREE.MeshStandardMaterial({map:tex,roughness:1,metalness:0,side:THREE.DoubleSide}));
-    m.rotation.x=-Math.PI/2;m.position.y=-.018;m.receiveShadow=true;m.name='Original battlemap floor';
+    // The supplied Area 1 image is a tactical reference, not a floor albedo.
+    // In the curated connected demo use a tiled, neutral cave surface so grids,
+    // labels and printed-map lighting do not become literal 3D geometry.
+    let material;
+    if(this.analysis.mode==='curated'){
+      const map=this.surfaces.stone.clone();map.needsUpdate=true;map.wrapS=map.wrapT=THREE.RepeatWrapping;map.repeat.set(Math.max(4,this.worldW*.7),Math.max(6,this.worldH*.7));map.userData.shared=false;
+      const normal=this.surfaces.stoneNormal.clone();normal.needsUpdate=true;normal.wrapS=normal.wrapT=THREE.RepeatWrapping;normal.repeat.copy(map.repeat);normal.userData.shared=false;
+      material=new THREE.MeshStandardMaterial({color:0x6a5a48,roughness:1,map,normalMap:normal,normalScale:new THREE.Vector2(.5,.5),side:THREE.DoubleSide});
+    }else{
+      const tex=new THREE.Texture(this.image);tex.needsUpdate=true;
+      tex.colorSpace=THREE.SRGBColorSpace;
+      tex.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+      this.mapTexture=tex;
+      material=new THREE.MeshStandardMaterial({map:tex,roughness:1,metalness:0,side:THREE.DoubleSide});
+    }
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(this.worldW,this.worldH),material);
+    m.rotation.x=-Math.PI/2;m.position.y=-.018;m.receiveShadow=true;m.name=this.analysis.mode==='curated'?'Cinematic cave floor':'Original battlemap floor';
     this.worldRoot.add(m);
   }
   _buildRock(){
@@ -202,7 +213,7 @@ export class TabletopWorld {
       const idx=Math.min(h-1,Math.max(0,j))*w+Math.min(w-1,Math.max(0,i));
       const light=brightness[idx]||.4;
       const t=rand(i+91,j+22);
-      colors.push(.26+light*.13+t*.025,.255+light*.12+t*.02,.24+light*.11+t*.018);
+      colors.push(.18+light*.055+t*.018,.185+light*.052+t*.016,.17+light*.048+t*.014);
     }
     for(let j=0;j<h;j++)for(let i=0;i<w;i++){
       const p=this.mapToWorld((i+.5)/w,(j+.5)/h);
@@ -215,7 +226,7 @@ export class TabletopWorld {
     geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
     geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
     geo.setIndex(indices);geo.computeVertexNormals();
-    const stone=new THREE.Mesh(geo,stoneMaterial(this.surfaces,{color:0xffffff,vertexColors:true,flatShading:false}));
+    const stone=new THREE.Mesh(geo,stoneMaterial(this.surfaces,{color:0x5a5d56,vertexColors:true,flatShading:false}));
     stone.castShadow=true;stone.receiveShadow=true;stone.name='Auto-extruded stone walls';this.worldRoot.add(stone);
     // A heightfield alone has no underside. Camera-height views previously saw
     // bright floating strips with sky visible beneath. Close every traversable
@@ -240,7 +251,7 @@ export class TabletopWorld {
     cliffGeo.setAttribute('position',new THREE.Float32BufferAttribute(cliff,3));
     cliffGeo.setAttribute('color',new THREE.Float32BufferAttribute(cliffColor,3));
     cliffGeo.computeVertexNormals();
-    const cliffMesh=new THREE.Mesh(cliffGeo,new THREE.MeshStandardMaterial({color:0x89877e,vertexColors:true,roughness:1,side:THREE.DoubleSide,flatShading:true}));
+    const cliffMesh=new THREE.Mesh(cliffGeo,new THREE.MeshStandardMaterial({color:0x4a4d48,roughness:1,side:THREE.DoubleSide,flatShading:true}));
     cliffMesh.name='Solid cave boundary faces';cliffMesh.castShadow=true;cliffMesh.receiveShadow=true;
     this.worldRoot.add(cliffMesh);
   }
@@ -294,6 +305,18 @@ export class TabletopWorld {
       const board=new THREE.Mesh(new THREE.BoxGeometry(.07+rand(i,4)*.10,.035,.25+rand(i,5)*.55),plank);
       board.position.set(r.x,.085,r.z);board.rotation.y=rand(i,8)*Math.PI*2;board.castShadow=true;
       this.worldRoot.add(board);
+    }
+    // Human tracks physically guide the eye north without baking tactical artwork
+    // into the floor texture.
+    const printMat=new THREE.MeshStandardMaterial({color:0x2c251f,roughness:1,transparent:true,opacity:.62,depthWrite:false});
+    for(let i=0;i<8;i++){
+      const v=.70-i*.055,u=.51+Math.sin(i*.9)*.012;
+      const p=this.mapToWorld(u,v);
+      for(const side of [-1,1]){
+        const shoe=new THREE.Mesh(new THREE.CircleGeometry(.075,10),printMat);
+        shoe.scale.set(.52,1.45,1);shoe.rotation.x=-Math.PI/2;shoe.rotation.z=.04*side;
+        shoe.position.set(p.x+side*.10,.012,p.z+(side>0?.09:-.09));shoe.name='Northbound human footprint';this.worldRoot.add(shoe);
+      }
     }
   }
   _buildCaveShell(){
@@ -420,7 +443,7 @@ export class TabletopWorld {
       const c=this.connection;this.orbit.target.set(c.x,c.depth+.35,c.z+.55);this.camera.position.set(c.x+9.5,c.depth+7.1,c.z+12.5);this.orbit.update();
     }else this.recenter();
   }
-  upperSpawn(){const c=this.connection;return {x:c.x,z:c.z-1.6};}
+  upperSpawn(){const c=this.connection;return {x:c.x+.15,z:c.z+2.18};}
   overview(){
     if(!this.connection){this.recenter();return;}
     this.switchMode(false);this.setCutaway(false);
@@ -445,7 +468,7 @@ export class TabletopWorld {
     if(this.walkMode){const p=this.connection?.landing||this.spawn;this._placeExploreCamera(p);}
     else{
       this.orbit.target.set(0,.15,-dim*.05);
-      this.camera.position.set(dim*.38,dim*.47,dim*.46);
+      this.camera.position.set(dim*.30,dim*.33,dim*.37);
       this.orbit.update();
     }
   }
