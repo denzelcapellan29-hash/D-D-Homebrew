@@ -18,6 +18,12 @@ async function loadRevealManifest(){
   if(!r.ok)return;
   const data=await r.json();
   revealManifest=data?.scenes||{};
+  for(const scene of Object.values(revealManifest)){
+   for(const src of [scene?.hero,scene?.focus]){
+    if(!src)continue;
+    const img=new Image();img.decoding='async';img.src=src;
+   }
+  }
  }catch{}
 }
 function sendPresentation(){if(cinemaOpen)cinema.postMessage({type:'presentation',scene:presentationScene});}
