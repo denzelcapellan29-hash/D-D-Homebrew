@@ -359,9 +359,11 @@ export class TabletopWorld {
       for(let i=0;i<pts.length-1;i++){
         const a=pts[i],b=pts[i+1];
         const topA=a.h,topB=b.h;
+        const roughA=.10+.04*Math.sin(i*1.7),roughB=.10+.04*Math.sin((i+1)*1.7);
         const quad=[
           [a.x,0,a.z,0,0],[b.x,0,b.z,1,0],
-          [b.x,topB,b.z,1,1],[a.x,topA,a.z,0,1]
+          [b.x+side*roughB,topB,b.z+.035*Math.cos((i+1)*1.3),1,1],
+          [a.x+side*roughA,topA,a.z+.035*Math.cos(i*1.3),0,1]
         ];
         const order=[0,1,2,0,2,3];
         for(const idx of order){const q=quad[idx];verts.push(q[0],q[1],q[2]);uvs.push(q[3],q[4]);}
@@ -374,6 +376,15 @@ export class TabletopWorld {
 
     };
     makeWall(-1);makeWall(1);
+
+    const crownGeo=new THREE.IcosahedronGeometry(.28,1);
+    for(const side of [-1,1])for(let i=2;i<profile.length-2;i+=4){
+      const [v,l,r]=profile[i],u=(side<0?l:r),p=this.mapToWorld(u,v);
+      const h=1.85+.28*Math.sin(i*.92)+.17*Math.cos(i*.47);
+      const m=new THREE.Mesh(crownGeo,wallMat);m.position.set(p.x+side*.08,h+.03,p.z);
+      m.scale.set(1.45,.62,1.15);m.rotation.y=i*.63;m.castShadow=true;m.receiveShadow=true;
+      m.name='Cave wall crown rock';shell.add(m);
+    }
 
     // Continue the corridor north past the map so first-person sees a passage,
     // not a hard boundary.
